@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0b1220">
+<title>BRIDGE — Bipolar State & Memory Dashboard</title>
+<style>
+:root{
+  --bg:#0b1220; --panel:#121a2b; --panel2:#0e1626; --line:#22304e;
+  --text:#e8eefc; --muted:#8fa3c8; --accent:#5eead4; --accent2:#fbbf24;
+  --ok:#34d399; --warn:#fbbf24; --high:#f87171; --info:#60a5fa; --purple:#c084fc;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.5;padding-bottom:76px}
+@media(min-width:920px){body{padding-bottom:0}}
+header{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:rgba(11,18,32,.88);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header h1{margin:0;font-size:18px;letter-spacing:.5px}
+header .sub{font-size:11px;color:var(--muted)}
+.hleft{display:flex;align-items:center;gap:10px}
+.logo{font-size:24px}
+.readout{font-size:12px;color:var(--muted);text-align:right;line-height:1.35}
+.readout b{color:var(--text)}
+main{max-width:1100px;margin:0 auto;padding:12px}
+section.tab{display:none}
+section.tab.active{display:block;animation:fade .18s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin:12px 0}
+.card h3{margin:0 0 10px;font-size:15px;letter-spacing:.3px}
+.card h4{margin:14px 0 6px;font-size:13px;color:var(--accent)}
+.small{font-size:12.5px;color:var(--muted)}
+.tiny{font-size:11.5px;color:var(--muted)}
+.disclaimer{font-size:12px;color:var(--muted);background:var(--panel2);border:1px dashed var(--line);border-radius:10px;padding:8px 12px;margin:10px 0}
+.grid2{display:grid;grid-template-columns:1fr;gap:0 18px}
+@media(min-width:720px){.grid2{grid-template-columns:1fr 1fr}}
+.field{margin:10px 0}
+.field>label{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--muted);margin-bottom:2px}
+.val{font-weight:700;color:var(--text);font-size:14px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:34px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:linear-gradient(90deg,#60a5fa,#34d399,#f87171)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:#e8eefc;margin-top:-8px;box-shadow:0 1px 4px rgba(0,0,0,.6);border:none}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:linear-gradient(90deg,#60a5fa,#34d399,#f87171)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#e8eefc;border:none;box-shadow:0 1px 4px rgba(0,0,0,.6)}
+input[type=text],input[type=number],input[type=tel],select,textarea{width:100%;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:16px;font-family:inherit}
+textarea{resize:vertical;min-height:70px}
+textarea.big{min-height:120px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+label.chk{display:flex;gap:10px;align-items:center;font-size:14px;margin:8px 0;cursor:pointer}
+label.chk input{width:18px;height:18px;accent-color:var(--accent)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#1b2946;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-size:14px;cursor:pointer;min-height:44px}
+.btn:hover{background:#22335a}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#06251f;font-weight:700}
+.btn.danger{background:#7f1d1d;border-color:#b91c1c;color:#fff}
+.btn.ghost{background:transparent}
+.btn.small{padding:6px 12px;min-height:36px;font-size:13px}
+.btn.tiny{padding:3px 9px;min-height:28px;font-size:12px;border-radius:8px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.rowbtns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:700;color:#08111f;white-space:nowrap}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.warnbox{border-left:4px solid var(--info);background:rgba(96,165,250,.08);border-radius:0 10px 10px 0;padding:10px 12px;margin:8px 0;font-size:13.5px}
+.warnbox b{display:block;font-size:13.5px;margin-bottom:2px}
+.warnbox.w-warn{border-color:var(--warn);background:rgba(251,191,36,.08)}
+.warnbox.w-high{border-color:var(--high);background:rgba(248,113,113,.09)}
+.warnbox.w-info{border-color:var(--info);background:rgba(96,165,250,.08)}
+.readoutbox{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0;font-size:14px}
+.readoutbox .big{font-size:20px;font-weight:800;letter-spacing:.5px}
+.sevbar{height:8px;background:#1c2740;border-radius:4px;overflow:hidden;margin:6px 0}
+.sevbar>div{height:100%;border-radius:4px;transition:width .3s}
+ul.editlist{list-style:none;margin:8px 0 0;padding:0}
+ul.editlist li{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:6px 0;font-size:14px}
+.addrow{display:flex;gap:8px;margin-top:6px}
+.addrow input{flex:1;min-width:0}
+.pillrow{display:flex;gap:8px;overflow-x:auto;padding:4px 0 8px;-webkit-overflow-scrolling:touch}
+.pill{background:var(--panel);border:1px solid var(--line);color:var(--muted);border-radius:999px;padding:8px 16px;font-size:13px;cursor:pointer;white-space:nowrap;min-height:40px}
+.pill.active{background:var(--accent);color:#06251f;border-color:var(--accent);font-weight:700}
+.subpanel{display:none}
+.subpanel.active{display:block}
+details.entry{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:8px 0}
+details.entry summary{cursor:pointer;list-style:none;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px}
+details.entry summary::-webkit-details-marker{display:none}
+details.entry summary .mini{color:var(--muted);font-size:12.5px}
+.entrybody{border-top:1px solid var(--line);margin-top:10px;padding-top:10px;font-size:14px}
+.entrybody .kv{display:grid;grid-template-columns:130px 1fr;gap:4px 10px;margin:6px 0}
+.entrybody .kv dt{color:var(--muted);font-size:12.5px}
+.entrybody .kv dd{margin:0;white-space:pre-wrap}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:11.5px;color:var(--muted)}
+.chartgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.minichart{width:100%;height:140px;display:block;background:var(--panel2);border:1px solid var(--line);border-radius:10px}
+.strip{display:flex;gap:2px;margin:6px 0 2px}
+.strip span{flex:1;height:14px;border-radius:3px;background:#1c2740;min-width:3px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:11.5px;color:var(--muted);margin-top:6px}
+.canvasWrap{position:relative;height:340px;border:1px solid var(--line);border-radius:14px;background:var(--panel2);overflow:hidden}
+@media(min-width:720px){.canvasWrap{height:460px}}
+#mapCanvas{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.mapcontrols{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.distrow{display:flex;align-items:center;gap:10px;margin:5px 0;font-size:13px}
+.distrow .name{width:170px;flex-shrink:0}
+.distrow .bar{flex:1;height:7px;background:#1c2740;border-radius:4px;overflow:hidden}
+.distrow .bar>div{height:100%}
+.distrow .d{width:44px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.gate{border:1px solid var(--high);background:rgba(248,113,113,.1);border-radius:12px;padding:12px;margin:10px 0;font-size:13.5px}
+.gate.ok{border-color:var(--ok);background:rgba(52,211,153,.08)}
+.locked{opacity:.4;pointer-events:none}
+.bigTimer{font-size:40px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:2px}
+.phaseLabel{text-align:center;color:var(--muted);font-size:13px;min-height:20px}
+.breathCircle{width:110px;height:110px;margin:12px auto;border-radius:50%;background:radial-gradient(circle at 35% 35%,#5eead4,#0f766e);transition:transform 1s ease-in-out;transform:scale(.85)}
+.letter{background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--muted);border-radius:0 12px 12px 0;padding:10px 14px;margin:8px 0;font-size:14px}
+.letter .lh{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px}
+.letter .lb{white-space:pre-wrap}
+nav#bottomnav{position:fixed;bottom:0;left:0;right:0;z-index:60;display:flex;background:rgba(14,20,36,.95);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+nav#bottomnav button{flex:1;background:none;border:none;color:var(--muted);font-size:9.5px;padding:8px 2px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav#bottomnav button .ic{font-size:19px;line-height:1}
+nav#bottomnav button.active{color:var(--accent)}
+@media(min-width:920px){
+  nav#bottomnav{top:57px;bottom:0;left:0;right:auto;width:180px;flex-direction:column;justify-content:flex-start;border-top:none;border-right:1px solid var(--line);padding:12px 8px}
+  nav#bottomnav button{flex-direction:row;justify-content:flex-start;font-size:14px;padding:12px 14px;border-radius:10px;gap:10px}
+  nav#bottomnav button.active{background:#1b2946}
+  main{margin-left:196px}
+}
+.overlay{position:fixed;inset:0;background:rgba(4,8,18,.78);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;max-width:520px;width:100%;max-height:86vh;overflow-y:auto}
+.modal h2{margin:0 0 8px;font-size:19px}
+#savedToast{position:fixed;right:14px;bottom:86px;background:#0f2a24;border:1px solid var(--ok);color:var(--ok);padding:7px 14px;border-radius:999px;font-size:12.5px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:120}
+@media(min-width:920px){#savedToast{bottom:20px}}
+.mfagrid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+@media(max-width:420px){.mfagrid{grid-template-columns:1fr}}
+hr.sep{border:none;border-top:1px solid var(--line);margin:14px 0}
+code.k{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12.5px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hleft">
+    <div class="logo">🌉</div>
+    <div>
+      <h1>BRIDGE</h1>
+      <div class="sub">Bipolar · Triadic Computational Psychiatry · 𝒫 ℬ 𝒯</div>
+    </div>
+  </div>
+  <div class="readout" id="headerReadout">No check-in yet</div>
+</header>
+
+<main>
+
+<!-- ============ TODAY ============ -->
+<section id="tab-today" class="tab active">
+  <div class="disclaimer">⚠️ <b>Not medical advice.</b> A self-tracking companion built on the 𝒫/ℬ/𝒯 framework + BRIDGE protocol. Never stop or change meds without your prescriber. Warning signs of mania (less sleep, racing thoughts, grandiosity, risky urges) → pause memory work & contact your team. In crisis → Safety tab.</div>
+  <div id="todayWarnings"></div>
+
+  <div class="card">
+    <h3>📋 Daily check-in — <span id="todayDate" class="small"></span></h3>
+    <div class="grid2">
+      <div>
+        <div class="field"><label>Mood <span class="val" id="ci-moodv">0</span></label>
+          <input type="range" id="ci-mood" min="-5" max="5" step="1" value="0">
+          <div class="tiny">−5 severe depression · 0 euthymic · +5 extreme elevation</div></div>
+        <div class="field"><label>Energy <span class="val" id="ci-energyv">5</span></label>
+          <input type="range" id="ci-energy" min="0" max="10" step="1" value="5"></div>
+        <div class="field"><label>Sleep last night (hours)</label>
+          <input type="number" id="ci-sleep" min="0" max="16" step="0.5" placeholder="e.g. 7.5"></div>
+        <div class="field"><label>Arousal / activation <span class="val" id="ci-arousalv">2</span></label>
+          <input type="range" id="ci-arousal" min="0" max="10" step="1" value="2">
+          <div class="tiny">BRIDGE rule: memory work only below 4/10</div></div>
+      </div>
+      <div>
+        <label class="chk"><input type="checkbox" id="ci-meds" checked> Medications taken as prescribed today</label>
+        <div class="field"><input type="text" id="ci-medsnote" placeholder="Med notes (side effects, dose timing…)"></div>
+        <details id="medfxDetails"><summary class="small" style="cursor:pointer">💊 Medication effect log — Access / Overwhelm / Flatness / Safety (Technique 9)</summary>
+          <div class="mfagrid">
+            <div class="field"><label>Memory access <span class="val" id="mf-accessv">5</span></label><input type="range" id="mf-access" min="0" max="10" value="5"></div>
+            <div class="field"><label>Overwhelm <span class="val" id="mf-overwhelmv">2</span></label><input type="range" id="mf-overwhelm" min="0" max="10" value="2"></div>
+            <div class="field"><label>Flatness <span class="val" id="mf-flatv">3</span></label><input type="range" id="mf-flat" min="0" max="10" value="3"></div>
+            <div class="field"><label>Safety <span class="val" id="mf-safev">7</span></label><input type="range" id="mf-safe" min="0" max="10" value="7"></div>
+          </div>
+          <div class="tiny">Bring this pattern to your prescriber — it maps your therapeutic window for memory work. Never change meds yourself.</div>
+        </details>
+        <div class="field"><label>State tag</label>
+          <div class="row">
+            <select id="ci-state" style="flex:1;min-width:150px">
+              <option value="stable">🟢 Stable</option>
+              <option value="hypomanic">🟡 Hypomanic</option>
+              <option value="premania">🟠 Pre-mania</option>
+              <option value="mania">🔴 Mania</option>
+              <option value="crash">🔵 Crash / Depression</option>
+              <option value="mixed">🟣 Mixed</option>
+              <option value="unsure">⚪ Unsure</option>
+            </select>
+            <button class="btn small" id="btnSuggest">Help me tag</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="sep">
+    <h4>The three dials — your coordinates in 𝒟³ space</h4>
+    <div class="grid2">
+      <div>
+        <div class="field"><label>𝒫 Precision — “how much do I trust this signal?” <span class="val" id="ci-Pv">0.0</span></label>
+          <input type="range" id="ci-P" min="-3" max="3" step="0.5" value="0">
+          <div class="tiny" id="ci-Pd">near center</div></div>
+        <div class="field"><label>ℬ Boundary — “where do I end and others begin?” <span class="val" id="ci-Bv">0.0</span></label>
+          <input type="range" id="ci-B" min="-3" max="3" step="0.5" value="0">
+          <div class="tiny" id="ci-Bd">near center</div></div>
+        <div class="field"><label>𝒯 Temporal — “past, present, or future?” <span class="val" id="ci-Tv">0.0</span></label>
+          <input type="range" id="ci-T" min="-3" max="3" step="0.5" value="0">
+          <div class="tiny" id="ci-Td">near center</div></div>
+      </div>
+      <div>
+        <div class="readoutbox" id="ciReadout"></div>
+      </div>
+    </div>
+
+    <div class="field"><label>Notes (events, context, what today felt like)</label>
+      <textarea id="ci-notes" class="big" placeholder="What happened today? What did you believe? What did your body feel like? What did you need?"></textarea></div>
+
+    <div id="editingBar" style="display:none" class="warnbox w-warn">✏️ <span id="editingText"></span> <button class="btn tiny ghost" id="btnCancelEdit">Cancel edit</button></div>
+    <div class="rowbtns"><button class="btn primary" id="btnSaveCheckin">💾 Save check-in</button></div>
+  </div>
+
+  <div class="card">
+    <h3>🧭 Today's frame</h3>
+    <div class="statgrid" id="todayStats"></div>
+  </div>
+</section>
+
+<!-- ============ MAP ============ -->
+<section id="tab-map" class="tab">
+  <div class="card">
+    <h3>🗺️ Your trajectory in 𝒟³ space</h3>
+    <div class="canvasWrap"><canvas id="mapCanvas"></canvas></div>
+    <div class="mapcontrols">
+      <button class="btn small" id="mapReset">Reset view</button>
+      <button class="btn small" id="mapAuto">⏸ Auto-rotate</button>
+      <button class="btn small" id="mapZoomIn">＋</button>
+      <button class="btn small" id="mapZoomOut">－</button>
+      <label class="chk" style="margin:0"><input type="checkbox" id="mapDiffs"> Show differential reference points</label>
+    </div>
+    <div class="legend">
+      <span><span class="dot" style="background:#34d399"></span>Stable</span>
+      <span><span class="dot" style="background:#a3e635"></span>Hypomanic</span>
+      <span><span class="dot" style="background:#fbbf24"></span>Pre-mania</span>
+      <span><span class="dot" style="background:#f87171"></span>Mania</span>
+      <span><span class="dot" style="background:#60a5fa"></span>Crash/Depression</span>
+      <span><span class="dot" style="background:#c084fc"></span>Mixed</span>
+      <span>Drag to rotate · wheel/pinch ± to zoom</span>
+    </div>
+  </div>
+  <div class="card">
+    <h3>📍 Position analysis</h3>
+    <div id="posCard"></div>
+  </div>
+  <div class="card">
+    <h3>📘 How to read this map</h3>
+    <p class="small">Your mind is plotted as a point <b>(𝒫, ℬ, 𝒯)</b> in a 3D computational space. Mental state = <code class="k">Ψ(t) = F(𝒫, ℬ, 𝒯) + ξ(t)</code>; severity = distance from the origin <code class="k">‖x‖ = √(𝒫²+ℬ²+𝒯²)</code>.</p>
+    <ul class="small">
+      <li><b>𝒫 Precision</b> (dopamine / salience): how strongly the brain weights incoming signals. High → everything feels cosmic & urgent. Low → flat, meaningless.</li>
+      <li><b>ℬ Boundary</b> (serotonin / DMN): self–world demarcation. Porous (−) → merging, flooding. Rigid (+) → sealed off.</li>
+      <li><b>𝒯 Temporal</b> (horizon): past-locked (−) = replaying; future-locked (+) = wired ahead; integrated = connected timeline.</li>
+      <li>Bipolar reference coordinates: <b>Mania (2, −1, 3)</b> · <b>Bipolar depression (−2, 1, −1.5)</b> · <b>Stable (0,0,0)</b> · Mixed ≈ (−1, −0.5, 1.5).</li>
+      <li>Attractors pull trajectories in — the farther inside a basin, the harder the climb out (hysteresis). Watching your trajectory drift toward one <i>early</i> is the whole point of tracking.</li>
+      <li>This is a self-tracking metaphor, not a diagnostic instrument.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ TIMELINE ============ -->
+<section id="tab-timeline" class="tab">
+  <div class="card">
+    <h3>📈 Patterns over time</h3>
+    <div class="pillrow" id="rangePills">
+      <button class="pill" data-days="7">7 days</button>
+      <button class="pill active" data-days="30">30 days</button>
+      <button class="pill" data-days="90">90 days</button>
+      <button class="pill" data-days="365">1 year</button>
+    </div>
+    <div class="statgrid" id="tlStats"></div>
+    <h4>State strip</h4>
+    <div class="strip" id="stateStrip"></div>
+    <div class="legend" id="stripLegend"></div>
+    <h4>Axis & signal charts</h4>
+    <div class="chartgrid" id="chartGrid"></div>
+  </div>
+  <div class="card">
+    <h3>🗓️ Check-in journal</h3>
+    <div id="entryList"></div>
+  </div>
+</section>
+
+<!-- ============ BRIDGE ============ -->
+<section id="tab-bridge" class="tab">
+  <div class="card">
+    <h3>🌉 The BRIDGE Protocol</h3>
+    <p class="small">Memories are stored with <b>state tags</b>. Mania/pre-mania and medicated stability save memories under different internal keys — that's why manic memories can feel sealed off, unreal, or "not mine" when stable. You don't break the lock. You <b>build a bridge</b> between the two shores, with anchors.</p>
+    <div id="bridgeSteps"></div>
+    <div class="disclaimer" style="margin-top:8px"><b>Golden rules:</b> never use sleep loss, stimulants, novelty or risk-taking to reach mania — that is re-triggering, not shadow work. Meds are the scaffold, not the silencer. Work below arousal 4/10. Stop any time. Not medical advice.</div>
+  </div>
+
+  <div class="card">
+    <h3>🌡️ Window of tolerance — right now</h3>
+    <div class="field"><label>Current arousal <span class="val" id="gateArousalv">0 / 10</span></label>
+      <input type="range" id="gateArousal" min="0" max="10" step="1" value="0"></div>
+    <div id="gateBanner" class="gate" style="display:none">🛑 <b>Arousal ≥ 4 — memory work is paused.</b> Ground first: Anchor Kit → breathing, 5-4-3-2-1, ice, feet on floor. Tell someone if it keeps rising. Move the slider down when you're truly back in the window.</div>
+    <div id="gateOkMsg" class="gate ok" style="display:block">✅ <b id="gateStatus">Within window</b> — you may do gentle bridge work. Touch memories for 10–20 s, then return to your anchor.</div>
+  </div>
+
+  <div class="pillrow" id="bridgePills">
+    <button class="pill active" data-sub="anchor">🧤 Anchor Kit</button>
+    <button class="pill" data-sub="memory">🗺️ Memory Map (B·R)</button>
+    <button class="pill" data-sub="sessions">⏱️ Bridge Sessions (I·D)</button>
+    <button class="pill" data-sub="parts">🗣️ Parts Voices (G·E)</button>
+  </div>
+
+  <!-- Anchor Kit -->
+  <div class="subpanel active" id="sub-anchor">
+    <div class="card">
+      <h3>🧤 Your Anchor Kit</h3>
+      <p class="small">Neutral/calming cues that pull you back to the stable shore. Build this while stable; use it during any bridge work or grounding.</p>
+      <div class="grid2">
+        <div><h4>Grounding phrases</h4><div id="ak-phrases"></div>
+          <div class="addrow"><input type="text" id="akIn-phrases" placeholder="e.g. That was then. This is now."><button class="btn small" data-akadd="phrases">Add</button></div></div>
+        <div><h4>Physical anchors</h4><div id="ak-items"></div>
+          <div class="addrow"><input type="text" id="akIn-items" placeholder="e.g. cold water bottle, blanket, photo"><button class="btn small" data-akadd="items">Add</button></div></div>
+        <div><h4>Sounds / songs</h4><div id="ak-songs"></div>
+          <div class="addrow"><input type="text" id="akIn-songs" placeholder="a song that feels like the stable shore"><button class="btn small" data-akadd="songs">Add</button></div></div>
+        <div><h4>Scents</h4><div id="ak-scents"></div>
+          <div class="addrow"><input type="text" id="akIn-scents" placeholder="e.g. lotion, coffee, cedar"><button class="btn small" data-akadd="scents">Add</button></div></div>
+      </div>
+      <hr class="sep">
+      <div class="grid2">
+        <div>
+          <h4>🫁 Breath pacer (4–2–6)</h4>
+          <div class="breathCircle" id="breathCircle"></div>
+          <div class="phaseLabel" id="breathLabel">Press start when ready</div>
+          <div class="rowbtns" style="justify-content:center"><button class="btn small" id="btnBreath">Start breathing</button></div>
+        </div>
+        <div>
+          <h4>🖐️ 5-4-3-2-1 senses</h4>
+          <div class="readoutbox" id="senseBox">A classic grounding drill. Press Next and find: <b>5 things you can see</b>.</div>
+          <div class="rowbtns"><button class="btn small" id="btnSenseNext">Next</button><button class="btn small ghost" id="btnSenseReset">Reset</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Memory Map -->
+  <div class="subpanel" id="sub-memory">
+    <div class="card">
+      <h3>🗺️ Memory Cartography — state-tagged memories</h3>
+      <p class="small">Techniques 1 + 5: memories aren't stored like video files — they're stored with state tags. Map each memory's tag and its <b>missing context</b>. Shame says "I should have known" — the grid shows the context was never encoded.</p>
+      <div id="memFormWrap">
+        <div class="grid2">
+          <div>
+            <div class="field"><label>Title</label><input type="text" id="mem-title" placeholder="e.g. The startup night, Feb —?"></div>
+            <div class="field"><label>Which state encoded it?</label>
+              <select id="mem-state">
+                <option value="premania">🟠 Pre-mania (best bridge)</option>
+                <option value="mania">🔴 Mania</option>
+                <option value="crash">🔵 Crash</option>
+                <option value="stable">🟢 Stable</option>
+                <option value="mixed">🟣 Mixed</option>
+                <option value="unsure">⚪ Unsure</option>
+              </select></div>
+            <div class="field"><label>The event (facts only)</label><textarea id="mem-event"></textarea></div>
+            <div class="field"><label>What did I believe about myself then?</label><textarea id="mem-believed"></textarea></div>
+            <div class="field"><label>Body sensations</label><textarea id="mem-body" placeholder="buzzing, heat, no need for sleep…"></textarea></div>
+            <div class="field"><label>What did I need? What was I protecting? (Shadow-Need Decoder)</label><textarea id="mem-need"></textarea></div>
+          </div>
+          <div>
+            <h4>Missing-context reconstruction grid</h4>
+            <label class="chk"><input type="checkbox" id="mc-sleep"> Sleep was broken / missing from the record</label>
+            <label class="chk"><input type="checkbox" id="mc-meds"> Med status untagged (off / changed / none)</label>
+            <label class="chk"><input type="checkbox" id="mc-support"> No support system in place then</label>
+            <label class="chk"><input type="checkbox" id="mc-time"> No calendar time / sequence anchors</label>
+            <label class="chk"><input type="checkbox" id="mc-norms"> Social norms & consequences dropped</label>
+            <label class="chk"><input type="checkbox" id="mc-others"> Other people's perspectives omitted</label>
+            <div class="field" style="margin-top:12px"><label>Bridge cue (song / scent / photo / posture)</label><input type="text" id="mem-cue"></div>
+            <div class="field"><label>Intensity then <span class="val" id="mem-iThenv">5</span></label><input type="range" id="mem-iThen" min="0" max="10" value="5"></div>
+            <div class="field"><label>Intensity now <span class="val" id="mem-iNowv">3</span></label><input type="range" id="mem-iNow" min="0" max="10" value="3"></div>
+          </div>
+        </div>
+        <div class="rowbtns"><button class="btn primary" id="btnSaveMem">💾 Save memory</button></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📚 Memory atlas <span class="small" id="memCount"></span></h3>
+      <div class="field" style="max-width:280px"><select id="memFilter">
+        <option value="all">All states</option><option value="premania">Pre-mania</option><option value="mania">Mania</option>
+        <option value="crash">Crash</option><option value="stable">Stable</option><option value="mixed">Mixed</option><option value="unsure">Unsure</option>
+      </select></div>
+      <div id="memList"></div>
+    </div>
+  </div>
+
+  <!-- Sessions -->
+  <div class="subpanel" id="sub-sessions">
+    <div class="card">
+      <h3>⏱️ Bridge session — Invite & Dual Awareness</h3>
+      <p class="small">Pre-mania is the <b>bridge state</b>: it shares ordinary context with stability, so climb gently — stable shore → mild pre-manic memory → stronger. Pendulate: touch the memory 10–20 s, then return to your anchor. Repeat 5–10 times.</p>
+      <div id="sesFormWrap">
+        <div class="grid2">
+          <div>
+            <div class="field"><label>Memory to visit</label><select id="ses-memory"></select></div>
+            <div class="field"><label>Ladder rung</label>
+              <select id="ses-rung">
+                <option>Rung 0: stable shore (anchor only)</option>
+                <option>Rung 1: mild pre-manic memory</option>
+                <option>Rung 2: stronger pre-manic memory</option>
+                <option>Rung 3: edge of mania echo — only with therapist/support</option>
+              </select></div>
+            <div class="row">
+              <div class="field" style="flex:1;min-width:130px"><label>Arousal start</label><input type="number" id="ses-arousalStart" min="0" max="10" value="0"></div>
+              <div class="field" style="flex:1;min-width:130px"><label>Arousal end</label><input type="number" id="ses-arousalEnd" min="0" max="10" value="0"></div>
+              <div class="field" style="flex:1;min-width:130px"><label>Minutes</label><input type="number" id="ses-min" min="1" max="60" value="10"></div>
+            </div>
+            <label class="chk"><input type="checkbox" id="ses-window" checked> Stayed inside the window (≤4/10) the whole time</label>
+            <div class="field"><label>Session notes — what did the part say? What need surfaced?</label><textarea id="ses-notes"></textarea></div>
+          </div>
+          <div>
+            <h4>Pendulation timer</h4>
+            <div class="readoutbox" style="text-align:center">
+              <div class="bigTimer" id="penDisplay">—</div>
+              <div class="phaseLabel" id="penPhase">Touch the memory 10–20 s → then return to anchor</div>
+            </div>
+            <div class="row" style="justify-content:center">
+              <button class="btn small" data-pen="15">15 s</button>
+              <button class="btn small" data-pen="20">20 s</button>
+              <button class="btn small" data-pen="30">30 s</button>
+              <button class="btn small ghost" id="penStop">Stop</button>
+              <button class="btn small ghost" id="penResetReps">Reps: <span id="penRepsN">0</span> ↺</button>
+            </div>
+            <hr class="sep">
+            <h4>Dual-awareness script</h4>
+            <div class="readoutbox small" style="font-style:italic">"I am [name], in [year], safe. I am on my medication. I can feel the echo of mania in my body: [sensation]. I don't have to follow it. I can listen to the part that remembers. It felt [grandiose / urgent / alive]. It needed [safety / recognition / rest]. I can give it that now, from my stable self."</div>
+            <div class="tiny">Grounding between reps: feet on floor · ice in hand · name 5 things you see.</div>
+          </div>
+        </div>
+        <div class="rowbtns"><button class="btn primary" id="btnLogSession">💾 Log session</button></div>
+      </div>
+    </div>
+    <div class="card"><h3>🧾 Session log</h3><div id="sesList"></div></div>
+  </div>
+
+  <!-- Parts -->
+  <div class="subpanel" id="sub-parts">
+    <div class="card">
+      <h3>🗣️ Give Voice to Parts</h3>
+      <p class="small">Shadow work: listen to the parts of you that live in each state. You're not glorifying mania — you're reclaiming the energy and needs inside it.</p>
+      <div class="pillrow" id="partTabs">
+        <button class="pill active" data-part="manic">🔴 Manic Self</button>
+        <button class="pill" data-part="premanic">🟠 Pre-Manic Self</button>
+        <button class="pill" data-part="crash">🔵 Crash Self</button>
+        <button class="pill" data-part="stable">🟢 Stable Self</button>
+      </div>
+      <div class="readoutbox" id="partPrompts"></div>
+      <div class="field"><label>Title (optional)</label><input type="text" id="part-title" placeholder="e.g. Letter to the one who felt invincible"></div>
+      <div class="field"><textarea id="part-body" class="big" placeholder="What do you want me to know? What do you need from me now? What shadow have I disowned in you?"></textarea></div>
+      <div class="rowbtns"><button class="btn primary" id="btnSaveLetter">💾 Save letter</button></div>
+    </div>
+    <div class="card"><h3">✉️ Letters</h3><div id="partList"></div></div>
+  </div>
+</section>
+
+<!-- ============ TOOLS ============ -->
+<section id="tab-tools" class="tab">
+  <div class="card">
+    <h3>🧰 Precision tools</h3>
+    <p class="small">Each tool targets one mechanism: <b>misplaced intensity</b>, <b>missing context</b>, <b>source amnesia</b>, <b>temporal collision</b>, or <b>role re-enactment</b>. All entries save locally.</p>
+  </div>
+
+  <div class="card">
+    <h3>⚡ Arousal-Transfer Audit <span class="tiny">— Technique 4</span></h3>
+    <p class="small">When emotion is disproportionate, it may be old state-intensity wearing a new face. If intensity is 8+, ground first, audit later.</p>
+    <div class="grid2">
+      <div>
+        <div class="field"><label>Trigger (current event)</label><input type="text" id="au-trigger"></div>
+        <div class="field"><label>Intensity <span class="val" id="au-intv">5</span></label><input type="range" id="au-int" min="0" max="10" value="5"></div>
+        <div class="field"><label>Suspected old state</label>
+          <select id="au-old"><option value="premania">Pre-mania</option><option value="mania">Mania</option><option value="trauma">Trauma arousal</option><option value="crash">Crash</option><option value="unknown">Unknown</option></select></div>
+      </div>
+      <div>
+        <div class="field"><label>Actual current facts</label><textarea id="au-facts"></textarea></div>
+        <div class="field"><label>Reframe sentence</label><input type="text" id="au-reframe" placeholder="e.g. This is 8/10 about 2021, 2/10 about this email."></div>
+      </div>
+    </div>
+    <div id="auWarn"></div>
+    <div class="rowbtns"><button class="btn primary" id="btnSaveAudit">💾 Save audit</button></div>
+    <div id="auditList"></div>
+  </div>
+
+  <div class="card">
+    <h3>✨ Source-Amnesia Revelation Check <span class="tiny">— Technique 10</span></h3>
+    <p class="small">Old trauma/manic fragments can feel like brand-new revelations. When an insight feels urgent and cosmic — check before acting.</p>
+    <div class="grid2">
+      <div>
+        <div class="field"><label>The "revelation"</label><textarea id="rv-insight"></textarea></div>
+        <div class="field"><label>Urgency <span class="val" id="rv-urgv">5</span></label><input type="range" id="rv-urg" min="0" max="10" value="5"></div>
+      </div>
+      <div>
+        <div class="field"><label>New or old?</label>
+          <select id="rv-newold"><option>Brand-new insight</option><option>Echoes an old feeling</option><option>Matches a past episode / old journal</option><option>Not sure yet</option></select></div>
+        <div class="field"><label>Evidence check (journal? timeline? therapist?)</label><textarea id="rv-evidence"></textarea></div>
+        <div class="field"><label>Commitment</label>
+          <select id="rv-action"><option>Wait 48 h before any action</option><option>Tell someone before acting</option><option>Just noting it — no action needed</option></select></div>
+      </div>
+    </div>
+    <div id="rvWarn"></div>
+    <div class="rowbtns"><button class="btn primary" id="btnSaveRev">💾 Save check</button></div>
+    <div id="revList"></div>
+  </div>
+
+  <div class="card">
+    <h3>⏳ Temporal Collision Present-Anchoring <span class="tiny">— Technique 8</span></h3>
+    <p class="small">Trauma locks the past; mania locks the future; re-enactment collapses both into now. Restore the stable "now" — then <b>read the present column aloud</b>.</p>
+    <div class="grid2">
+      <div class="field"><label>Past-locked fear</label><textarea id="ta-past"></textarea></div>
+      <div class="field"><label>Future-locked destiny</label><textarea id="ta-future"></textarea></div>
+    </div>
+    <div class="field"><label>Present evidence (facts, right now)</label><textarea id="ta-present" class="big"></textarea></div>
+    <div class="rowbtns"><button class="btn primary" id="btnSaveTemp">💾 Save anchor</button></div>
+    <div id="tempList"></div>
+  </div>
+
+  <div class="card">
+    <h3>🎭 Trauma-Role Re-enactment Map <span class="tiny">— Technique 11</span></h3>
+    <p class="small">Mania recruits current people into old trauma roles: victim, rescuer, abuser, abandoner. Map the casting before reacting to the person. Never confront people while elevated — process in therapy.</p>
+    <div class="grid2">
+      <div>
+        <div class="field"><label>Person / situation</label><input type="text" id="ro-person"></div>
+        <div class="field"><label>Role being cast</label><input type="text" id="ro-role" placeholder="rescuer / abandoner / …"></div>
+      </div>
+      <div>
+        <div class="field"><label>Old script running</label><textarea id="ro-script"></textarea></div>
+        <div class="field"><label>Reality-check sentence</label><input type="text" id="ro-check" placeholder="e.g. This person is a coworker, not my 2014 boss."></div>
+      </div>
+    </div>
+    <div class="rowbtns"><button class="btn primary" id="btnSaveRole">💾 Save map</button></div>
+    <div id="roleList"></div>
+  </div>
+
+  <div class="card">
+    <h3>🎁 Shadow → Gift reference</h3>
+    <div class="grid2" id="shadowMap"></div>
+  </div>
+</section>
+
+<!-- ============ SAFETY ============ -->
+<section id="tab-safety" class="tab">
+  <div class="card" style="border-color:var(--high)">
+    <h3 style="color:var(--high)">🆘 I need help now</h3>
+    <p class="small">If you are manic, psychotic, suicidal, or unsafe — stabilization comes first. Memory work can wait.</p>
+    <div class="rowbtns"><button class="btn danger" id="btnHelpNow">🆘 Open crisis resources</button></div>
+  </div>
+
+  <div class="card">
+    <h3>🚨 My early warning signs (prodrome)</h3>
+    <div id="ewHost"></div>
+    <div class="addrow"><input type="text" id="ewIn" placeholder="e.g. sleeping 4 h and feeling wired"><button class="btn small" data-safadd="ew">Add</button></div>
+  </div>
+
+  <div class="card">
+    <h3>💊 Medication list</h3>
+    <p class="tiny">Data for your prescriber. Never change doses yourself (Technique 9).</p>
+    <div id="medList"></div>
+    <div class="addrow"><input type="text" id="medName" placeholder="Name" style="flex:2"><input type="text" id="medDose" placeholder="Dose" style="flex:1"><input type="text" id="medTime" placeholder="Time(s)" style="flex:1"><button class="btn small" data-safadd="med">Add</button></div>
+  </div>
+
+  <div class="card">
+    <h3>📞 Support contacts</h3>
+    <div id="ctList"></div>
+    <div class="addrow"><input type="text" id="ctName" placeholder="Name" style="flex:2"><input type="text" id="ctRole" placeholder="Role (pdoc, therapist…)" style="flex:2"><input type="tel" id="ctPhone" placeholder="Phone" style="flex:1"><button class="btn small" data-safadd="ct">Add</button></div>
+  </div>
+
+  <div class="card">
+    <h3>🛡️ Crash plan (Trauma-Re-enactment Reframe — Technique 7)</h3>
+    <p class="small">Treat the crash not just as chemistry but as a possible re-enactment of early defeat/abandonment: <b>Routine · Contact · Compassion · No major decisions</b>.</p>
+    <textarea id="crisisPlan" class="big" placeholder="My crash plan: who I contact, what I cancel, what I keep (routine, light, meals), what I decide NOTHING about, what compassion sounds like to me…"></textarea>
+  </div>
+
+  <div class="card">
+    <h3>🌙 Sleep-Circadian Memory Anchor (Technique 12)</h3>
+    <p class="small">Sleep loss both triggers mania and re-encodes memory toward it. Sleep is the intervention, not just hygiene: fixed wake time · morning light · no stimulants after noon · wind-down ritual · bed as anchor. If sleep drops 2+ h or you feel wired → contact your team.</p>
+    <textarea id="sleepPlan" placeholder="Tonight's plan: wake time, light, cutoff for caffeine/screens, wind-down, bed time…"></textarea>
+  </div>
+
+  <div class="card" style="border-color:var(--warn)">
+    <h3>⛔ Abort protocol (memorize)</h3>
+    <p class="small">Stop the work → Ground (feet on floor, ice in hand, slow breathing) → Tell someone (staff / therapist / safe person) → Take meds exactly as prescribed → No stimulants → Sleep → Crisis line if it escalates.</p>
+  </div>
+
+  <div class="card">
+    <h3>🌅 Daily rhythm (social-rhythm therapy)</h3>
+    <ul class="small">
+      <li>Same wake & sleep times — every day, weekends included</li>
+      <li>Morning light within 1 h of waking · dim evenings</li>
+      <li>Meds at the same time daily (use a pill box / alarm)</li>
+      <li>Meals, exercise, social contact at regular times</li>
+      <li>Daily: mood log + sleep log (this app's Today tab)</li>
+      <li>2–3×/week: 20 min bridge journaling or parts dialogue</li>
+      <li>Monthly: review timeline & early warning signs</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ DATA ============ -->
+<section id="tab-data" class="tab">
+  <div class="card">
+    <h3>💾 Your data — 100% local</h3>
+    <p class="small">Everything is stored in this browser's <b>localStorage</b> — no server, no account, works offline. Keep using the same browser & device, and <b>export backups regularly</b>. To move devices: export here → open this same file on the other device → import.</p>
+    <div class="statgrid" id="dataStats"></div>
+    <div class="rowbtns">
+      <button class="btn primary" id="btnExport">⬇️ Export backup (JSON)</button>
+      <button class="btn" id="btnImportWrap">⬆️ Import backup</button>
+      <input type="file" id="importFile" accept=".json,application/json" style="display:none">
+      <button class="btn ghost" id="btnCopy">📋 Copy JSON</button>
+    </div>
+    <hr class="sep">
+    <button class="btn danger" id="btnErase">🗑️ Erase all data</button>
+  </div>
+  <div class="card">
+    <h3>ℹ️ About</h3>
+    <p class="small"><b>BRIDGE Dashboard</b> — a self-contained implementation of the <i>Unified Theory of Degens v0.3</i> triadic framework (𝒫 Precision, ℬ Boundary, 𝒯 Temporal) applied to <b>bipolar disorder</b>, plus the <b>BRIDGE / BRIDGE-IP</b> state-tag memory protocols and 12 at-home techniques (state-tag cartography, bridge ladder, micro-pendulation, arousal-transfer audit, missing-context grid, shadow-need decoder, crash reframe, temporal anchoring, med titration log, revelation check, role map, sleep anchor).</p>
+    <p class="tiny">Emergent hypotheses & self-monitoring methods — not established treatments, not medical advice, not a replacement for psychiatric care. If you notice decreased sleep, racing thoughts, grandiosity, risky behavior, or rising energy: stop memory work and contact your treatment team.</p>
+  </div>
+</section>
+
+</main>
+
+<nav id="bottomnav">
+  <button class="navbtn active" data-tab="today"><span class="ic">📋</span>Today</button>
+  <button class="navbtn" data-tab="map"><span class="ic">🗺️</span>Map</button>
+  <button class="navbtn" data-tab="timeline"><span class="ic">📈</span>Timeline</button>
+  <button class="navbtn" data-tab="bridge"><span class="ic">🌉</span>Bridge</button>
+  <button class="navbtn" data-tab="tools"><span class="ic">🧰</span>Tools</button>
+  <button class="navbtn" data-tab="safety"><span class="ic">🛡️</span>Safety</button>
+  <button class="navbtn" data-tab="data"><span class="ic">💾</span>Data</button>
+</nav>
+
+<div id="modalRoot"></div>
+<div id="savedToast">Saved ✓</div>
+
+<script>
+'use strict';
+/* ================= UTILITIES ================= */
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const fmtN=(v,d=1)=>((v>0?'+':'')+Number(v).toFixed(d));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dkey=ts=>{const d=new Date(ts);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+const fmtDate=ts=>new Date(ts).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+const fmtDT=ts=>new Date(ts).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+
+/* ================= CONSTANTS ================= */
+const STATES={
+  stable:{label:'Stable',color:'#34d399'}, hypomanic:{label:'Hypomanic',color:'#a3e635'},
+  premania:{label:'Pre-mania',color:'#fbbf24'}, mania:{label:'Mania',color:'#f87171'},
+  crash:{label:'Crash / Depression',color:'#60a5fa'}, mixed:{label:'Mixed',color:'#c084fc'},
+  unsure:{label:'Unsure',color:'#94a3b8'}
+};
+const AXES={
+  P:{sym:'𝒫',name:'Precision',high:'signals weighted too strong — everything feels meaningful/urgent',low:'signals weighted too weak — flatness, nothing matters'},
+  B:{sym:'ℬ',name:'Boundary',high:'boundaries rigid — sealed off from others',low:'boundaries porous — merging, flooded by others'},
+  T:{sym:'𝒯',name:'Temporal',high:'future-locked — wired ahead, destiny pull',low:'past-locked — replaying, can\'t move forward'}
+};
+const REFS=[
+  {name:'Mania attractor',p:[2,-1,3],color:'#f87171',core:true,note:'𝒫↑ ℬ porous 𝒯 future'},
+  {name:'Bipolar depression',p:[-2,1,-1.5],color:'#60a5fa',core:true,note:'𝒫↓ ℬ rigid 𝒯 past'},
+  {name:'Mixed state ≈',p:[-1,-0.5,1.5],color:'#c084fc',core:true,note:'low mood + activation'},
+  {name:'Healthy zone',p:[0,0,0],color:'#34d399',core:true,note:'dynamic balance'},
+  {name:'GAD (differential)',p:[1,0,2],color:'#fbbf24',core:false,note:'future worry'},
+  {name:'BPD (differential)',p:[0,-2,0],color:'#f472b6',core:false,note:'porous ℬ, chaotic 𝒫'},
+  {name:'Unipolar depression',p:[-2,0,-1.5],color:'#93c5fd',core:false,note:'comparison'},
+  {name:'Schizoaffective',p:[2,-1.5,1.5],color:'#fda4af',core:false,note:'mood + psychosis'}
+];
+const BRIDGE_STEPS=[
+  ['B','Baseline Safety','Meds on time · sleep protected · Anchor Kit ready · crisis plan exists. No memory work when sleep-deprived, intoxicated, or highly stressed.'],
+  ['R','Record the States','Map Pre-Mania / Mania / Crash / Stable in the Memory Map below. You are studying the territory, not living in it.'],
+  ['I','Invite the Memory Gently','Start with a mild pre-manic memory — never peak mania. Use a bridge cue. Arousal 3–4/10 maximum.'],
+  ['D','Dual Awareness','Pendulate: touch the memory 10–20 s, return to your anchor. "That was then. This is now. I am safe."'],
+  ['G','Give Voice to Parts','Write to the Manic, Pre-Manic, Crash and Stable selves. Ask what each needed and what gift it carries.'],
+  ['E','Embed New Narrative','Reconsolidation: recall in dual awareness, add "I survived. I have support. I don\'t have to act on this." Repeat gently, over weeks.']
+];
+const PARTS={
+  manic:{title:'The Manic Self',color:'#f87171',prompts:'What were you trying to achieve? What did you need? What were you protecting? What gift do you carry?'},
+  premanic:{title:'The Pre-Manic Self',color:'#fbbf24',prompts:'What was building before the switch? Which warning signs were easy to miss? What do you want me to notice earlier next time?'},
+  crash:{title:'The Crash Self',color:'#60a5fa',prompts:'What shame, grief, or exhaustion lives here? What do you need when everything collapses? What would compassion sound like right now?'},
+  stable:{title:'The Stable Self',color:'#34d399',prompts:'What do you fear about the manic self? What do you secretly miss about it? What makes you a safe shore?'}
+};
+const SHADOW_MAP=[['Grandiosity','Healthy confidence and vision'],['Impulsivity','Spontaneity with boundaries'],['Rage','Assertiveness and protection'],['Vulnerability','Intimacy and honesty'],['Numbness','Rest and discernment'],['Mission intensity','Purpose, paced']];
+const PART_COLORS={manic:'#f87171',premanic:'#fbbf24',crash:'#60a5fa',stable:'#34d399'};
+const SENSES=[['5','things you can SEE'],['4','things you can FEEL (chair, feet, clothes)'],['3','things you can HEAR'],['2','things you can SMELL'],['1','thing you can TASTE']];
+const CRISIS_DEFAULT='US & Canada: call/text 988 (Suicide & Crisis Lifeline)\nUK & ROI: Samaritans 116 123\nEU: 112 · Worldwide: findahelpline.com\nImmediate danger: your local emergency number';
+
+/* ================= STORAGE ================= */
+const STORE_KEY='bridge.dashboard.v1';
+const DEFAULT_DB=()=>({
+  version:1, createdAt:Date.now(),
+  profile:{name:'',consentAccepted:false},
+  settings:{gateArousal:0},
+  checkins:[], memories:[], partsLetters:[], audits:[], revelationChecks:[], temporalAnchors:[], roles:[], bridgeSessions:[],
+  anchorKit:{phrases:['That was then. This is now. I am safe.','I can feel the echo without following it.','Meds are the scaffold. I am the bridge.'],items:[],songs:[],scents:[]},
+  safety:{earlyWarnings:['Sleep drops by 2+ hours','Thoughts start racing','Need less sleep but feel wired','Grandiose or cosmic ideas','Pull toward spending / risk','Irritable, fast, invincible'],
+    meds:[],contacts:[],crisisPlan:'',sleepPlan:'',crisisLines:CRISIS_DEFAULT},
+  ui:{lastTab:'today'}
+});
+function migrate(d){const b=DEFAULT_DB();const m=Object.assign(b,d);m.profile=Object.assign(b.profile,d.profile||{});m.settings=Object.assign(b.settings,d.settings||{});m.anchorKit=Object.assign(b.anchorKit,d.anchorKit||{});m.safety=Object.assign(b.safety,d.safety||{});m.ui=Object.assign(b.ui,d.ui||{});return m;}
+let DB;
+try{const raw=localStorage.getItem(STORE_KEY);DB=raw?migrate(JSON.parse(raw)):DEFAULT_DB();}catch(e){console.warn(e);DB=DEFAULT_DB();}
+let saveTimer=null;
+function save(){clearTimeout(saveTimer);saveTimer=setTimeout(()=>{try{localStorage.setItem(STORE_KEY,JSON.stringify(DB));flashSaved('Saved ✓');}catch(e){flashSaved('⚠ Storage failed');}},180);}
+window.addEventListener('beforeunload',()=>{try{localStorage.setItem(STORE_KEY,JSON.stringify(DB));}catch(e){}});
+
+/* ================= TOAST / MODAL ================= */
+let toastT=null;
+function flashSaved(msg){const t=$('#savedToast');t.textContent=msg;t.style.opacity=1;clearTimeout(toastT);toastT=setTimeout(()=>t.style.opacity=0,1300);}
+function openModal(html){$('#modalRoot').innerHTML='<div class="overlay" id="ovl"><div class="modal">'+html+'</div></div>';$('#ovl').addEventListener('click',e=>{if(e.target.id==='ovl')closeModal();});}
+function closeModal(){$('#modalRoot').innerHTML='';}
+
+/* ================= NAV ================= */
+let activeTab='today', ciDirty=false;
+function showTab(name){
+  activeTab=name;DB.ui.lastTab=name;save();
+  $$('section.tab').forEach(s=>s.classList.toggle('active',s.id==='tab-'+name));
+  $$('#bottomnav .navbtn').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
+  window.scrollTo({top:0});
+  if(name==='today'){renderToday();}
+  if(name==='map'){renderPosCard();startMapLoop();}
+  if(name==='timeline'){renderTimeline();}
+  if(name==='bridge'){renderBridge();}
+  if(name==='tools'){renderTools();}
+  if(name==='safety'){renderSafety();}
+  if(name==='data'){renderData();}
+}
+
+/* ================= SHARED COMPUTE ================= */
+function latestCheckin(){const s=[...DB.checkins].sort((a,b)=>b.ts-a.ts);return s[0]||null;}
+function todayEntry(){const k=dkey(Date.now());return DB.checkins.find(c=>c.date===k)||null;}
+function distTo(e,ref){if(!e)return null;return Math.hypot(e.P-ref.p[0],e.B-ref.p[1],e.T-ref.p[2]);}
+function zoneInfo(P,B,T){
+  const s=Math.hypot(P,B,T);
+  if(s<0.9)return{t:'Healthy zone',c:'#34d399',d:'Dials near balance — dynamic stability. This is the shore to launch bridge work from.'};
+  const dM=Math.hypot(P-2,B+1,T-3),dD=Math.hypot(P+2,B-1,T+1.5);
+  if(dM<1.2)return{t:'Manic region',c:'#f87171',d:'Near the mania coordinate (2,−1,3). Protect sleep, no big decisions, pause bridge work.'};
+  if(dD<1.2)return{t:'Depressive region',c:'#60a5fa',d:'Near the bipolar-depression coordinate (−2,1,−1.5). Be gentle — routine, light, contact.'};
+  if(s<1.8)return{t:'Drifting',c:'#fbbf24',d:'Outside the healthy zone but not at an attractor. Good moment to nudge dials back: sleep, meds, routine.'};
+  return{t:'Extreme region',c:'#f87171',d:'Far from origin. Reach out — you don\'t have to steer this alone.'};
+}
+function phrase(ax,v){const m=Math.abs(v);if(m<0.5)return'near center';const s=m>=1.5?'strongly ':'mildly ';return s+(v>0?AXES[ax].high:AXES[ax].low);}
+function computeWarnings(e){
+  const w=[];if(!e)return w;const{P,B,T,arousal,sleep,energy,mood}=e;
+  if(sleep>0&&sleep<5)w.push({lvl:'w-warn',t:'Sleep is very short ('+sleep+' h)',d:'Sleep loss triggers mania AND re-encodes memory toward it (Pattern 13). Sleep is the #1 intervention today.'});
+  else if(sleep>0&&sleep<6&&energy>=7)w.push({lvl:'w-warn',t:'Pre-mania pattern: short sleep + high energy',d:'The classic prodrome combo. Protect tonight\'s sleep, skip stimulants & extra commitments, consider flagging to your team.'});
+  const dM=distTo(e,{p:[2,-1,3]});
+  if(dM<1.5)w.push({lvl:'w-high',t:'Near the manic attractor (d='+dM.toFixed(2)+')',d:'Pause memory/bridge work · skip big decisions · protect sleep · contact your team, especially if new or escalating.'});
+  const dD=distTo(e,{p:[-2,1,-1.5]});
+  if(dD<1.5)w.push({lvl:'w-info',t:'Near the depressive attractor (d='+dD.toFixed(2)+')',d:'Be gentle: routine, morning light, contact, tiny steps. Crash plan is in the Safety tab.'});
+  if(arousal>=4)w.push({lvl:'w-warn',t:'Arousal '+arousal+'/10 — above the window',d:'BRIDGE rule: no memory work above 4/10. Ground first (Anchor Kit), then continue.'});
+  if(mood<=-4)w.push({lvl:'w-high',t:'Severe low mood logged',d:'If there are thoughts of self-harm, open the Safety tab now and reach out. You don\'t have to ride this alone.'});
+  return w;
+}
+function calcStreak(){const set=new Set(DB.checkins.map(c=>c.date));let n=0;const d=new Date();if(!set.has(dkey(d.getTime())))d.setDate(d.getDate()-1);while(set.has(dkey(d.getTime()))){n++;d.setDate(d.getDate()-1);}return n;}
+function daysSince(state){const l=DB.checkins.filter(c=>c.state===state).sort((a,b)=>b.ts-a.ts);if(!l.length)return null;return Math.floor((Date.now()-l[0].ts)/864e5);}
+
+/* ================= HEADER ================= */
+function renderHeader(){
+  const e=latestCheckin(),el=$('#headerReadout');
+  if(!e){el.innerHTML='No check-in yet — start in <b>Today</b>';return;}
+  const s=Math.hypot(e.P,e.B,e.T);
+  el.innerHTML='<span class="dot" style="background:'+(STATES[e.state]||STATES.unsure).color+'"></span><b>'+fmtN(e.P)+' · '+fmtN(e.B)+' · '+fmtN(e.T)+'</b><br>‖x‖ '+s.toFixed(2)+' · '+fmtDate(e.ts);
+}
+
+/* ================= TODAY ================= */
+function bindRange(id,outId,fmt){const el=$('#'+id);if(!el)return;el.addEventListener('input',()=>{ciDirty=true;if(outId)$('#'+outId).textContent=fmt(el.value);updateCiLive();});}
+function updateCiLive(){
+  const P=+$('#ci-P').value,B=+$('#ci-B').value,T=+$('#ci-T').value;
+  $('#ci-Pd').textContent=phrase('P',P);$('#ci-Bd').textContent=phrase('B',B);$('#ci-Td').textContent=phrase('T',T);
+  const s=Math.hypot(P,B,T),z=zoneInfo(P,B,T);
+  $('#ciReadout').innerHTML='<span class="big" style="color:'+z.c+'">('+fmtN(P)+' , '+fmtN(B)+' , '+fmtN(T)+')</span> &nbsp;‖x‖ = <b>'+s.toFixed(2)+'</b><br><b style="color:'+z.c+'">'+z.t+'</b> — '+z.d;
+  renderTodayWarnings({P,B,T,arousal:+$('#ci-arousal').value,sleep:+$('#ci-sleep').value||0,energy:+$('#ci-energy').value,mood:+$('#ci-mood').value});
+}
+function renderTodayWarnings(e){
+  const w=computeWarnings(e);
+  $('#todayWarnings').innerHTML=w.map(x=>'<div class="warnbox '+x.lvl+'"><b>'+esc(x.t)+'</b>'+esc(x.d)+'</div>').join('');
+}
+function fillForm(e){
+  $('#ci-mood').value=e.mood;$('#ci-moodv').textContent=fmtN(e.mood,0);
+  $('#ci-energy').value=e.energy;$('#ci-energyv').textContent=e.energy;
+  $('#ci-sleep').value=e.sleep||'';$('#ci-arousal').value=e.arousal;$('#ci-arousalv').textContent=e.arousal;
+  $('#ci-meds').checked=!!e.meds;$('#ci-medsnote').value=e.medsnote||'';
+  const f=e.medFx||{access:5,overwhelm:2,flat:3,safety:7};
+  $('#mf-access').value=f.access;$('#mf-accessv').textContent=f.access;$('#mf-overwhelm').value=f.overwhelm;$('#mf-overwhelmv').textContent=f.overwhelm;
+  $('#mf-flat').value=f.flat;$('#mf-flatv').textContent=f.flat;$('#mf-safe').value=f.safety;$('#mf-safev').textContent=f.safety;
+  $('#ci-state').value=e.state||'unsure';
+  $('#ci-P').value=e.P;$('#ci-B').value=e.B;$('#ci-T').value=e.T;
+  $('#ci-notes').value=e.notes||'';ciDirty=false;updateCiLive();
+}
+let editingId=null;
+function renderToday(){
+  $('#todayDate').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+  if(!ciDirty){const t=todayEntry();if(t)fillForm(t);}
+  updateCiLive();
+  const daysTracked=new Set(DB.checkins.map(c=>c.date)).size;
+  $('#todayStats').innerHTML=
+    '<div class="stat"><b>'+DB.checkins.length+'</b><span>check-ins logged</span></div>'+
+    '<div class="stat"><b>'+calcStreak()+' 🔥</b><span>day streak</span></div>'+
+    '<div class="stat"><b>'+(daysSince('mania')===null?'—':daysSince('mania')+'d')+'</b><span>since last mania-tagged entry</span></div>'+
+    '<div class="stat"><b>'+(daysSince('crash')===null?'—':daysSince('crash')+'d')+'</b><span>since last crash-tagged entry</span></div>';
+}
+function saveCheckin(){
+  const prev=editingId?DB.checkins.find(c=>c.id===editingId):null;
+  const ts=prev?prev.ts:Date.now();
+  const e={id:prev?prev.id:uid(),ts,date:dkey(ts),
+    mood:+$('#ci-mood').value,energy:+$('#ci-energy').value,sleep:+$('#ci-sleep').value||0,
+    meds:$('#ci-meds').checked,medsnote:$('#ci-medsnote').value.trim(),
+    medFx:{access:+$('#mf-access').value,overwhelm:+$('#mf-overwhelm').value,flat:+$('#mf-flat').value,safety:+$('#mf-safe').value},
+    P:+$('#ci-P').value,B:+$('#ci-B').value,T:+$('#ci-T').value,
+    arousal:+$('#ci-arousal').value,state:$('#ci-state').value,notes:$('#ci-notes').value.trim()};
+  if(prev){const i=DB.checkins.findIndex(c=>c.id===editingId);DB.checkins[i]=e;editingId=null;$('#editingBar').style.display='none';}
+  else{
+    const existing=DB.checkins.findIndex(c=>c.date===e.date);
+    if(existing>-1){if(!confirm('You already logged today. Replace that entry?'))return;e.id=DB.checkins[existing].id;e.ts=DB.checkins[existing].ts;DB.checkins[existing]=e;}
+    else DB.checkins.push(e);
+  }
+  DB.settings.gateArousal=e.arousal;ciDirty=false;save();
+  $('#btnSaveCheckin').textContent='💾 Save check-in';
+  renderHeader();renderToday();renderBridge();
+}
+function loadEntryToForm(id){
+  const e=DB.checkins.find(c=>c.id===id);if(!e)return;
+  editingId=id;fillForm(e);
+  $('#editingText').textContent='Editing entry from '+fmtDT(e.ts)+' — saving will update it.';
+  $('#editingBar').style.display='block';$('#btnSaveCheckin').textContent='💾 Update entry';
+  showTab('today');
+}
+function suggestStateModal(){
+  const qs=['Slept 2+ hours less than usual (or under 5 h)?','Thoughts noticeably faster than usual?','Unusually confident, grandiose, or "chosen"?','Unusually irritable or snap-prone?','Doing much more / can\'t stop starting things?','Empty, flat, exhausted, or collapsed?'];
+  openModal('<h2>🧭 State tag helper</h2><p class="small">Quick screen based on your early-warning patterns. This suggests — you decide.</p>'+
+    qs.map((q,i)=>'<label class="chk"><input type="checkbox" class="sgq" data-i="'+i+'"> '+q+'</label>').join('')+
+    '<div class="readoutbox" id="sgResult">Tick what applies.</div>'+
+    '<div class="rowbtns"><button class="btn primary" id="btnSgApply">Apply suggested tag</button><button class="btn ghost" onclick="closeModal()">Close</button></div>');
+  const upd=()=>{const a=$$('.sgq').map(c=>c.checked);$('#sgResult').innerHTML='<b>'+esc(suggestState(a).msg)+'</b>';};
+  $$('.sgq').forEach(c=>c.addEventListener('change',upd));
+  $('#btnSgApply').addEventListener('click',()=>{const a=$$('.sgq').map(c=>c.checked);const r=suggestState(a);$('#ci-state').value=r.tag;updateCiLive();closeModal();});
+}
+function suggestState(a){
+  const up=(a[0]?1:0)+(a[1]?1:0)+(a[2]?1:0)+(a[3]?1:0)+(a[4]?1:0);
+  if(a[5]&&(a[1]||a[3]))return{tag:'mixed',msg:'Activated body + low/empty mood — Mixed states carry real risk. Tag: Mixed. Consider telling your team today.'};
+  if(a[0]&&(a[1]||a[2]||a[4]))return{tag:'premania',msg:'Short sleep + activation is the highest-signal pre-mania pattern. Tag: Pre-mania. Protect sleep tonight; check your early-warning list.'};
+  if(up>=4)return{tag:'mania',msg:'Multiple activation signs at once — be careful: no big decisions, protect sleep, contact your team. Tag: Mania.'};
+  if(up>=2)return{tag:'hypomanic',msg:'Some activation without the danger cluster. Tag: Hypomanic — and keep watching it.'};
+  if(a[5])return{tag:'crash',msg:'Collapse/empty signs. Tag: Crash / Depression. Be gentle — see the crash plan in Safety.'};
+  return{tag:'stable',msg:'No strong activation or collapse signs. Tag: Stable — or tag by feel.'};
+}
+
+/* ================= 3D MAP ================= */
+const map={rx:-0.42,ry:0.72,zoom:1,auto:true,dragging:false,px:0,py:0};
+let mapRaf=null,mapDiffsOn=false;
+const CUBE=[[-3,-3,-3],[3,-3,-3],[-3,3,-3],[3,3,-3],[-3,-3,3],[3,-3,3],[-3,3,3],[3,3,3]];
+const EDGES=[[0,1],[2,3],[4,5],[6,7],[0,2],[1,3],[4,6],[5,7],[0,4],[1,5],[2,6],[3,7]];
+function proj(p,W,H){
+  let x=p[0],y=p[1],z=p[2];
+  const cy=Math.cos(map.ry),sy=Math.sin(map.ry);
+  const x1=x*cy-z*sy,z1=x*sy+z*cy;
+  const cx=Math.cos(map.rx),sx=Math.sin(map.rx);
+  const y1=y*cx-z1*sx,z2=y*sx+z1*cx;
+  const s=(Math.min(W,H)/2-42)*map.zoom/3.4;
+  return{X:W/2+x1*s,Y:H/2-y1*s,z:z2,s};
+}
+function drawMap(){
+  const cv=$('#mapCanvas');if(!cv)return;
+  const rect=cv.getBoundingClientRect();if(rect.width<5)return;
+  const dpr=window.devicePixelRatio||1,W=rect.width,H=rect.height;
+  cv.width=W*dpr;cv.height=H*dpr;
+  const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
+  const O=proj([0,0,0],W,H);
+  // cube
+  g.strokeStyle='rgba(143,163,200,.18)';g.lineWidth=1;
+  EDGES.forEach(([a,b])=>{const A=proj(CUBE[a],W,H),B=proj(CUBE[b],W,H);g.beginPath();g.moveTo(A.X,A.Y);g.lineTo(B.X,B.Y);g.stroke();});
+  // axes
+  const ax=[[[3,0,0],'𝒫 precision','#f0abfc'],[[0,3,0],'ℬ boundary','#93c5fd'],[[0,0,3],'𝒯 time','#fcd34d']];
+  ax.forEach(([p,lab,col])=>{
+    const Pp=proj(p,W,H),N=proj(p.map(v=>-v),W,H);
+    g.strokeStyle=col;g.lineWidth=1.6;g.beginPath();g.moveTo(N.X,N.Y);g.lineTo(Pp.X,Pp.Y);g.stroke();
+    g.fillStyle=col;g.font='bold 13px system-ui';g.fillText(lab,Pp.X+6,Pp.Y+4);
+  });
+  // healthy zone
+  g.strokeStyle='rgba(52,211,153,.55)';g.setLineDash([5,5]);g.lineWidth=1.4;
+  g.beginPath();g.arc(O.X,O.Y,O.s*0.9,0,Math.PI*2);g.stroke();g.setLineDash([]);
+  g.fillStyle='rgba(52,211,153,.8)';g.font='11px system-ui';g.fillText('healthy zone',O.X-32,O.Y+O.s*0.9+14);
+  // trajectory
+  const pts=[...DB.checkins].sort((a,b)=>a.ts-b.ts).slice(-40);
+  if(pts.length>1){
+    for(let i=1;i<pts.length;i++){
+      const A=proj([pts[i-1].P,pts[i-1].B,pts[i-1].T],W,H),B=proj([pts[i].P,pts[i].B,pts[i].T],W,H);
+      g.strokeStyle='rgba(232,238,252,'+(0.15+0.55*i/pts.length)+')';g.lineWidth=1.4;
+      g.beginPath();g.moveTo(A.X,A.Y);g.lineTo(B.X,B.Y);g.stroke();
+    }
+  }
+  pts.forEach((c,i)=>{
+    const P=proj([c.P,c.B,c.T],W,H),col=(STATES[c.state]||STATES.unsure).color;
+    g.fillStyle=col;g.beginPath();g.arc(P.X,P.Y,i===pts.length-1?5.5:3,0,Math.PI*2);g.fill();
+    if(i===pts.length-1){g.strokeStyle='#fff';g.lineWidth=1.5;g.beginPath();g.arc(P.X,P.Y,9,0,Math.PI*2);g.stroke();
+      g.fillStyle='#e8eefc';g.font='bold 11px system-ui';g.fillText('now',P.X+12,P.Y+4);}
+  });
+  // reference points
+  REFS.filter(r=>r.core||mapDiffsOn).forEach(r=>{
+    const P=proj(r.p,W,H),a=0.4+0.6*((P.z+3.4)/6.8);
+    g.globalAlpha=a;g.fillStyle=r.color;
+    g.beginPath();g.moveTo(P.X,P.Y-6);g.lineTo(P.X+5,P.Y);g.lineTo(P.X,P.Y+6);g.lineTo(P.X-5,P.Y);g.closePath();g.fill();
+    g.font='10.5px system-ui';g.fillText(r.name,P.X+9,P.Y-2);
+    g.globalAlpha=1;
+  });
+}
+function startMapLoop(){if(!mapRaf)mapRaf=requestAnimationFrame(mapLoop);}
+function mapLoop(){
+  if(activeTab!=='map'){mapRaf=null;return;}
+  if(map.auto&&!map.dragging)map.ry+=0.0032;
+  drawMap();mapRaf=requestAnimationFrame(mapLoop);
+}
+function renderPosCard(){
+  const e=latestCheckin(),el=$('#posCard');
+  if(!e){el.innerHTML='<p class="small">No check-ins yet — log one in Today and your position will appear here.</p>';return;}
+  const s=Math.hypot(e.P,e.B,e.T),z=zoneInfo(e.P,e.B,e.T);
+  let rows=REFS.map(r=>({r,d:distTo(e,r.p)})).filter(x=>x.d!==null).sort((a,b)=>a.d-b.d);
+  let closestClinical=null;
+  rows.forEach(x=>{if(x.r.name!=='Healthy zone'&&(!closestClinical||x.d<closestClinical.d))closestClinical=x;});
+  el.innerHTML='<div class="readoutbox"><span class="big" style="color:'+z.c+'">('+fmtN(e.P)+' , '+fmtN(e.B)+' , '+fmtN(e.T)+')</span>'+
+    ' &nbsp;‖x‖ = <b>'+s.toFixed(2)+'</b> · <b style="color:'+z.c+'">'+z.t+'</b><div class="sevbar"><div style="width:'+clamp(s/3.6*100,3,100)+'%;background:'+z.c+'"></div></div>'+
+    '<span class="small">'+esc(z.d)+'</span></div>'+
+    '<h4>Distance to reference coordinates</h4>'+
+    rows.map(x=>'<div class="distrow"><span class="name"'+(closestClinical&&x.r===closestClinical.r?' style="font-weight:700"':'')+'><span class="dot" style="background:'+x.r.color+'"></span>'+esc(x.r.name)+'</span>'+
+      '<span class="bar"><div style="width:'+clamp(100-x.d/6*100,4,100)+'%;background:'+x.r.color+'"></div></span><span class="d">'+x.d.toFixed(2)+'</span></div>').join('')+
+    (closestClinical?'<p class="tiny">Closest clinical attractor: <b style="color:'+closestClinical.r.color+'">'+esc(closestClinical.r.name)+'</b> (d='+closestClinical.d.toFixed(2)+') — '+esc(closestClinical.r.note)+'. Differential points are hints for conversation with your clinician, not diagnoses.</p>':'');
+}
+
+/* ================= TIMELINE ================= */
+let chartRange=30;
+function drawMini(cv,series,opt){
+  const dpr=window.devicePixelRatio||1,w=cv.clientWidth||300,h=cv.clientHeight||140;
+  cv.width=w*dpr;cv.height=h*dpr;
+  const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);
+  const{color,min,max,label,fmt}=opt;
+  const pL=8,pR=38,pT=18,pB=8;
+  g.font='11px system-ui';
+  if(!series.length){g.fillStyle='#4b5f86';g.fillText(label+' — no data',pL,h/2);return;}
+  const t0=series[0].t,t1=series[series.length-1].t;
+  const X=t=>pL+(w-pL-pR)*((t-t0)/Math.max(1,t1-t0));
+  const Y=v=>pT+(h-pT-pB)*(1-(v-min)/((max-min)||1));
+  [min,0,max].filter((v,i,a)=>v>=min&&v<=max&&a.indexOf(v)===i).forEach(gv=>{
+    const y=Y(gv);g.strokeStyle='rgba(255,255,255,.08)';g.beginPath();g.moveTo(pL,y);g.lineTo(w-pR,y);g.stroke();
+    g.fillStyle='#5d7098';g.textAlign='left';g.fillText(fmt(gv),w-pR+4,y+3);
+  });
+  g.strokeStyle=color;g.lineWidth=1.8;g.beginPath();
+  series.forEach((p,i)=>{const x=X(p.t),y=Y(p.v);i?g.lineTo(x,y):g.moveTo(x,y);});
+  g.stroke();
+  if(series.length<=90)series.forEach(p=>{g.fillStyle=color;g.beginPath();g.arc(X(p.t),Y(p.v),2,0,Math.PI*2);g.fill();});
+  g.fillStyle='#e8eefc';g.fillText(label,pL,11);
+  g.fillStyle=color;g.textAlign='right';g.fillText(fmt(series[series.length-1].v),w-pR,11);g.textAlign='left';
+}
+function renderTimeline(){
+  const cut=Date.now()-chartRange*864e5;
+  const cs=DB.checkins.filter(c=>c.ts>=cut).sort((a,b)=>a.ts-b.ts);
+  // stats
+  const n=cs.length;const avg=k=>{const v=cs.filter(c=>c[k]!==undefined&&c[k]!==null&&!(k==='sleep'&&!c.sleep));return v.length?(v.reduce((s,c)=>s+c[k],0)/v.length):null;};
+  const avS=avg('sleep'),avA=avg('arousal');
+  const states={};cs.forEach(c=>states[c.state]=(states[c.state]||0)+1);
+  $('#tlStats').innerHTML=
+    '<div class="stat"><b>'+n+'</b><span>check-ins in range</span></div>'+
+    '<div class="stat"><b>'+(avS===null?'—':avS.toFixed(1)+' h')+'</b><span>avg sleep</span></div>'+
+    '<div class="stat"><b>'+(avA===null?'—':avA.toFixed(1)+'/10')+'</b><span>avg arousal</span></div>'+
+    Object.entries(states).map(([st,c])=>'<div class="stat"><b style="color:'+STATES[st].color+'">'+c+'</b><span>'+STATES[st].label+' days</span></div>').join('');
+  // strip
+  let strip='';for(let i=chartRange-1;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const k=dkey(d.getTime());
+    const dayE=DB.checkins.filter(c=>c.date===k).sort((a,b)=>b.ts-a.ts);
+    strip+='<span style="'+(dayE.length?'background:'+STATES[dayE[0].state].color:'')+'" title="'+k+(dayE.length?' — '+STATES[dayE[0].state].label:'')+'"></span>';}
+  $('#stateStrip').innerHTML=strip;
+  $('#stripLegend').innerHTML=Object.entries(STATES).map(([k,v])=>'<span><span class="dot" style="background:'+v.color+'"></span>'+v.label+'</span>').join('')+'<span>· empty = no entry</span>';
+  // charts
+  const grid=$('#chartGrid');grid.innerHTML='';
+  const defs=[['mood','Mood',-5,5,'#e8eefc',v=>fmtN(v,0)],['energy','Energy',0,10,'#a3e635',v=>Math.round(v)],
+    ['sleep','Sleep (h)',0,12,'#93c5fd',v=>Math.round(v*10)/10],['arousal','Arousal',0,10,'#fb923c',v=>Math.round(v)],
+    ['P','𝒫 Precision',-3,3,'#f0abfc',v=>fmtN(v,1)],['B','ℬ Boundary',-3,3,'#60a5fa',v=>fmtN(v,1)],['T','𝒯 Time',-3,3,'#fcd34d',v=>fmtN(v,1)]];
+  defs.forEach(([k,label,mn,mx,col,f])=>{
+    const cv=document.createElement('canvas');cv.className='minichart';grid.appendChild(cv);
+    drawMini(cv,cs.map(c=>({t:c.ts,v:+c[k]||0})),{color:col,min:mn,max:mx,label,fmt:f});
+  });
+  renderEntryList();
+}
+function renderEntryList(){
+  const list=[...DB.checkins].sort((a,b)=>b.ts-a.ts).slice(0,120);
+  $('#entryList').innerHTML=list.map(e=>{
+    const st=STATES[e.state]||STATES.unsure;const s=Math.hypot(e.P,e.B,e.T);
+    return '<details class="entry"><summary><span class="dot" style="background:'+st.color+'"></span><b>'+fmtDate(e.ts)+'</b>'+
+      '<span class="badge" style="background:'+st.color+'">'+st.label+'</span>'+
+      '<span class="mini">mood '+fmtN(e.mood,0)+' · sleep '+(e.sleep||'?')+'h · ‖x‖ '+s.toFixed(2)+' · arousal '+e.arousal+'</span></summary>'+
+      '<div class="entrybody"><dl class="kv">'+
+      '<dt>Coordinates</dt><dd>('+fmtN(e.P)+' , '+fmtN(e.B)+' , '+fmtN(e.T)+') — 𝒫: '+esc(phrase('P',e.P))+' · ℬ: '+esc(phrase('B',e.B))+' · 𝒯: '+esc(phrase('T',e.T))+'</dd>'+
+      '<dt>Energy</dt><dd>'+e.energy+'/10</dd>'+
+      '<dt>Meds</dt><dd>'+(e.meds?'✅ taken':'❌ not marked')+(e.medsnote?' — '+esc(e.medsnote):'')+'</dd>'+
+      (e.medFx?'<dt>Med effect log</dt><dd>access '+e.medFx.access+' · overwhelm '+e.medFx.overwhelm+' · flatness '+e.medFx.flat+' · safety '+e.medFx.safety+'</dd>':'')+
+      '<dt>Notes</dt><dd>'+esc(e.notes||'—')+'</dd></dl>'+
+      '<div class="rowbtns"><button class="btn tiny" data-act="edit-checkin" data-id="'+e.id+'">✏️ Edit</button>'+
+      '<button class="btn tiny danger" data-act="del-checkin" data-id="'+e.id+'">🗑 Delete</button></div></div></details>';
+  }).join('')||'<p class="small">No entries yet.</p>';
+}
+
+/* ================= BRIDGE ================= */
+function renderBridge(){
+  renderBridgeSteps();updateGate();renderAnchor();renderMemList();refreshSesMemoryOptions();renderSesList();renderParts();
+}
+function renderBridgeSteps(){
+  $('#bridgeSteps').innerHTML=BRIDGE_STEPS.map(s=>'<div class="distrow" style="align-items:flex-start"><span class="name" style="font-weight:800;color:var(--accent)">'+s[0]+' — '+esc(s[1])+'</span><span class="small">'+esc(s[2])+'</span></div>').join('');
+}
+function updateGate(){
+  const a=DB.settings.gateArousal||0,hot=a>=4;
+  const sl=$('#gateArousal');if(+sl.value!==a)sl.value=a;
+  $('#gateArousalv').textContent=a+' / 10';
+  $('#gateArousalv').style.color=hot?'var(--high)':'var(--ok)';
+  $('#gateBanner').style.display=hot?'block':'none';
+  $('#gateOkMsg').style.display=hot?'none':'block';
+  $('#gateStatus').textContent=a>=7?'Well above window — grounding + support now':'Within window';
+  $('#memFormWrap').classList.toggle('locked',hot);
+  $('#sesFormWrap').classList.toggle('locked',hot);
+}
+function renderAnchor(){
+  const ak=DB.anchorKit;
+  [['phrases','#ak-phrases'],['items','#ak-items'],['songs','#ak-songs'],['scents','#ak-scents']].forEach(([k,sel])=>{
+    $(sel).innerHTML='<ul class="editlist">'+ak[k].map((v,i)=>'<li><span>'+esc(v)+'</span><button class="btn tiny ghost" data-act="del-ak" data-list="'+k+'" data-idx="'+i+'">✕</button></li>').join('')+'</ul>'||'<p class="tiny">Empty — add your own.</p>';
+  });
+}
+function renderMemList(){
+  const f=$('#memFilter').value;
+  const list=[...DB.memories].filter(m=>f==='all'||m.state===f).sort((a,b)=>b.ts-a.ts);
+  $('#memCount').textContent='('+DB.memories.length+' mapped)';
+  $('#memList').innerHTML=list.map(m=>{
+    const st=STATES[m.state]||STATES.unsure;
+    const miss=['sleep','meds','support','time','norms','others'].filter(k=>m.missing&&m.missing[k]).map(k=>({sleep:'sleep',meds:'meds',support:'support',time:'time',norms:'norms',others:'others\' views'}[k]));
+    return '<details class="entry"><summary><span class="dot" style="background:'+st.color+'"></span><b>'+esc(m.title)+'</b>'+
+      '<span class="badge" style="background:'+st.color+'">'+st.label+'</span><span class="mini">then '+m.iThen+'/10 → now '+m.iNow+'/10</span></summary>'+
+      '<div class="entrybody"><dl class="kv">'+
+      '<dt>Event</dt><dd>'+esc(m.event||'—')+'</dd>'+
+      '<dt>Believed then</dt><dd>'+esc(m.believed||'—')+'</dd>'+
+      '<dt>Body</dt><dd>'+esc(m.body||'—')+'</dd>'+
+      '<dt>Need / protecting</dt><dd>'+esc(m.need||'—')+'</dd>'+
+      '<dt>Missing context</dt><dd>'+(miss.length?miss.map(esc).join(' · '):'none flagged')+'</dd>'+
+      (m.cue?'<dt>Bridge cue</dt><dd>'+esc(m.cue)+'</dd>':'')+
+      '</dl><div class="rowbtns">'+
+      '<button class="btn tiny primary" data-act="visit-mem" data-id="'+m.id+'">🌉 Visit in a session</button>'+
+      '<button class="btn tiny danger" data-act="del-mem" data-id="'+m.id+'">🗑 Delete</button></div></div></details>';
+  }).join('')||'<p class="small">No memories mapped yet — start with a <b>mild pre-manic</b> memory (it\'s the best bridge).</p>';
+}
+function refreshSesMemoryOptions(){
+  const cur=$('#ses-memory').value;
+  $('#ses-memory').innerHTML='<option value="">— free session (no specific memory) —</option>'+
+    [...DB.memories].sort((a,b)=>b.ts-a.ts).map(m=>'<option value="'+m.id+'">'+STATES[m.state].label+' · '+esc(m.title)+'</option>').join('');
+  if(cur)$('#ses-memory').value=cur;
+}
+function renderSesList(){
+  const list=[...DB.bridgeSessions].sort((a,b)=>b.ts-a.ts);
+  $('#sesList').innerHTML=list.map(s=>'<details class="entry"><summary><b>'+fmtDate(s.ts)+'</b><span class="mini">'+esc(s.memoryTitle||'free session')+' · '+esc(s.rung||'')+'</span>'+
+    '<span class="mini">arousal '+s.arousalStart+'→'+s.arousalEnd+' · '+s.reps+' reps · '+s.min+' min</span>'+(s.withinWindow?'':' <span class="badge" style="background:var(--high)">left window</span>')+'</summary>'+
+    '<div class="entrybody"><dl class="kv"><dt>Notes</dt><dd>'+esc(s.notes||'—')+'</dd></dl>'+
+    '<div class="rowbtns"><button class="btn tiny danger" data-act="del-ses" data-id="'+s.id+'">🗑 Delete</button></div></div></details>').join('')||'<p class="small">No sessions logged yet.</p>';
+}
+/* pendulation timer */
+const pen={iv:null,left:0,phase:'idle',reps:0,dur:15};
+function penUI(){$('#penDisplay').textContent=pen.phase==='idle'?'—':pen.left+'s';$('#penPhase').textContent=pen.phase==='touch'?'TOUCH the memory — feel the echo':pen.phase==='anchor'?'RETURN to your anchor — that was then, this is now':'Press a duration to begin';$('#penRepsN').textContent=pen.reps;}
+function penStart(sec){clearInterval(pen.iv);pen.dur=sec;pen.left=sec;pen.phase='touch';penUI();
+  pen.iv=setInterval(()=>{pen.left--;
+    if(pen.left<=0){if(pen.phase==='touch'){pen.phase='anchor';pen.left=10;pen.reps++;if(navigator.vibrate)try{navigator.vibrate(90);}catch(e){}}
+      else{pen.phase='touch';pen.left=pen.dur;}}
+    penUI();},1000);}
+function penStop(){clearInterval(pen.iv);pen.phase='idle';penUI();}
+/* parts */
+let currentPart='manic';
+function renderParts(){
+  const p=PARTS[currentPart];
+  $$('#partTabs .pill').forEach(b=>b.classList.toggle('active',b.dataset.part===currentPart));
+  $('#partPrompts').innerHTML='<b style="color:'+p.color+'">'+p.title+'</b> — '+esc(p.prompts);
+  const list=[...DB.partsLetters].sort((a,b)=>b.ts-a.ts);
+  $('#partList').innerHTML=list.map(l=>'<div class="letter" style="border-left-color:'+PART_COLORS[l.part]+'"><div class="lh"><b style="color:'+PART_COLORS[l.part]+'">'+PARTS[l.part].title+'</b><span>'+fmtDT(l.ts)+'</span></div>'+
+    (l.title?'<b>'+esc(l.title)+'</b><br>':'')+'<div class="lb">'+esc(l.body)+'</div>'+
+    '<div class="rowbtns"><button class="btn tiny danger" data-act="del-letter" data-id="'+l.id+'">🗑 Delete</button></div></div>').join('')||'<p class="small">No letters yet. Start with whichever part feels loudest — or the one you\'ve been avoiding.</p>';
+}
+
+/* ================= TOOLS ================= */
+function renderTools(){
+  $('#shadowMap').innerHTML=SHADOW_MAP.map(([s,g])=>'<div class="readoutbox"><b>'+esc(s)+'</b> → '+esc(g)+'</div>').join('');
+  $('#auditList').innerHTML=[...DB.audits].sort((a,b)=>b.ts-a.ts).map(a=>'<details class="entry"><summary><b>'+esc(a.trigger)+'</b><span class="mini">'+a.intensity+'/10 · old: '+esc(a.oldState)+'</span><span class="mini">'+fmtDate(a.ts)+'</span></summary>'+
+    '<div class="entrybody"><dl class="kv"><dt>Current facts</dt><dd>'+esc(a.facts||'—')+'</dd><dt>Reframe</dt><dd>'+esc(a.reframe||'—')+'</dd></dl>'+
+    '<div class="rowbtns"><button class="btn tiny danger" data-act="del-audit" data-id="'+a.id+'">🗑</button></div></div></details>').join('')||'<p class="tiny" style="margin-top:10px">No audits yet.</p>';
+  $('#revList').innerHTML=[...DB.revelationChecks].sort((a,b)=>b.ts-a.ts).map(r=>'<details class="entry"><summary><b>'+esc((r.insight||'').slice(0,60))+'</b><span class="mini">urgency '+r.urgency+'/10 · '+esc(r.newold)+'</span><span class="mini">'+fmtDate(r.ts)+'</span></summary>'+
+    '<div class="entrybody"><dl class="kv"><dt>Evidence</dt><dd>'+esc(r.evidence||'—')+'</dd><dt>Commitment</dt><dd>'+esc(r.action)+'</dd></dl>'+
+    '<div class="rowbtns"><button class="btn tiny danger" data-act="del-rev" data-id="'+r.id+'">🗑</button></div></div></details>').join('')||'<p class="tiny" style="margin-top:10px">No checks yet.</p>';
+  $('#tempList').innerHTML=[...DB.temporalAnchors].sort((a,b)=>b.ts-a.ts).map(t=>'<details class="entry"><summary><b>⏳ '+fmtDate(t.ts)+'</b><span class="mini">'+esc((t.present||'').slice(0,60))+'</span></summary>'+
+    '<div class="entrybody"><dl class="kv"><dt>Past-locked fear</dt><dd>'+esc(t.past||'—')+'</dd><dt>Future-locked destiny</dt><dd>'+esc(t.future||'—')+'</dd><dt>Present evidence</dt><dd>'+esc(t.present||'—')+'</dd></dl>'+
+    '<div class="rowbtns"><button class="btn tiny danger" data-act="del-temp" data-id="'+t.id+'">🗑</button></div></div></details>').join('')||'<p class="tiny" style="margin-top:10px">No anchors yet.</p>';
+  $('#roleList').innerHTML=[...DB.roles].sort((a,b)=>b.ts-a.ts).map(r=>'<details class="entry"><summary><b>'+esc(r.person)+'</b><span class="mini">cast as: '+esc(r.role)+'</span><span class="mini">'+fmtDate(r.ts)+'</span></summary>'+
+    '<div class="entrybody"><dl class="kv"><dt>Old script</dt><dd>'+esc(r.script||'—')+'</dd><dt>Reality check</dt><dd>'+esc(r.check||'—')+'</dd></dl>'+
+    '<div class="rowbtns"><button class="btn tiny danger" data-act="del-role" data-id="'+r.id+'">🗑</button></div></div></details>').join('')||'<p class="tiny" style="margin-top:10px">No role maps yet.</p>';
+}
+
+/* ================= SAFETY ================= */
+function renderSafety(){
+  $('#ewHost').innerHTML='<ul class="editlist">'+DB.safety.earlyWarnings.map((v,i)=>'<li><span>⚠️ '+esc(v)+'</span><button class="btn tiny ghost" data-act="del-ew" data-idx="'+i+'">✕</button></li>').join('')+'</ul>';
+  $('#medList').innerHTML='<ul class="editlist">'+(DB.safety.meds.length?DB.safety.meds.map((m,i)=>'<li><span>💊 <b>'+esc(m.name)+'</b> '+esc(m.dose)+' — '+esc(m.time)+'</span><button class="btn tiny ghost" data-act="del-med" data-idx="'+i+'">✕</button></li>').join(''):'<li><span class="tiny">No meds listed.</span></li>')+'</ul>';
+  $('#ctList').innerHTML='<ul class="editlist">'+(DB.safety.contacts.length?DB.safety.contacts.map((c,i)=>'<li><span>📞 <b>'+esc(c.name)+'</b> ('+esc(c.role)+') — <a href="tel:'+esc(c.phone)+'" style="color:var(--accent)">'+esc(c.phone)+'</a></span><button class="btn tiny ghost" data-act="del-ct" data-idx="'+i+'">✕</button></li>').join(''):'<li><span class="tiny">No contacts yet.</span></li>')+'</ul>';
+  $('#crisisPlan').value=DB.safety.crisisPlan||'';
+  $('#sleepPlan').value=DB.safety.sleepPlan||'';
+}
+function helpModal(){
+  const cts=DB.safety.contacts.map(c=>'<li>📞 <b>'+esc(c.name)+'</b> ('+esc(c.role)+') — <a href="tel:'+esc(c.phone)+'" style="color:var(--accent)">'+esc(c.phone)+'</a></li>').join('');
+  openModal('<h2>🆘 You are not alone</h2>'+
+    '<div class="warnbox w-high"><b>Immediate danger?</b> Call your local emergency number now.</div>'+
+    '<pre class="small" style="white-space:pre-wrap;font-family:inherit">'+esc(DB.safety.crisisLines||CRISIS_DEFAULT)+'</pre>'+
+    (cts?'<h4>My people</h4><ul class="small">'+cts+'</ul>':'')+
+    '<h4>Right now (abort protocol)</h4><ol class="small"><li>Stop whatever you\'re doing — especially memory work.</li><li>Ground: feet flat on floor · ice in hand · slow exhale-longer-than-inhale breathing.</li><li>Tell someone — use a contact above.</li><li>Take meds exactly as prescribed. No stimulants, no alcohol.</li><li>Protect tonight\'s sleep.</li></ol>'+
+    '<div class="rowbtns"><button class="btn primary" onclick="closeModal()">I\'ve reached someone / I\'m grounding</button></div>');
+}
+
+/* ================= DATA ================= */
+function renderData(){
+  const json=JSON.stringify(DB);
+  const kb=(json.length*2/1024).toFixed(1);
+  const pct=Math.min(100,(json.length*2/(5*1024*1024))*100).toFixed(1);
+  $('#dataStats').innerHTML=
+    '<div class="stat"><b>'+DB.checkins.length+'</b><span>check-ins</span></div>'+
+    '<div class="stat"><b>'+DB.memories.length+'</b><span>memories mapped</span></div>'+
+    '<div class="stat"><b>'+DB.partsLetters.length+'</b><span>parts letters</span></div>'+
+    '<div class="stat"><b>'+DB.bridgeSessions.length+'</b><span>bridge sessions</span></div>'+
+    '<div class="stat"><b>'+kb+' KB</b><span>of ~5 MB browser storage ('+pct+'%)</span></div>'+
+    '<div class="stat"><b>'+new Date(DB.createdAt).toLocaleDateString()+'</b><span>tracking since</span></div>';
+}
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='bridge-backup-'+dkey(Date.now())+'.json';document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+function importJSON(file){
+  const r=new FileReader();
+  r.onload=()=>{try{
+    const d=JSON.parse(r.result);
+    if(!d||typeof d!=='object'||!Array.isArray(d.checkins))throw new Error('Not a BRIDGE backup file');
+    if(!confirm('Replace ALL current data with this backup ('+d.checkins.length+' check-ins)?'))return;
+    DB=migrate(d);save();renderAll();alert('✅ Backup restored.');
+  }catch(e){alert('Import failed: '+e.message);}};
+  r.readAsText(file);
+}
+function copyJSON(){
+  const s=JSON.stringify(DB);
+  const fb=()=>{const t=document.createElement('textarea');t.value=s;document.body.appendChild(t);t.select();
+    try{document.execCommand('copy');flashSaved('Copied ✓');}catch(e){alert('Copy failed — use Export instead.');}t.remove();};
+  if(navigator.clipboard&&window.isSecureContext)navigator.clipboard.writeText(s).then(()=>flashSaved('Copied ✓')).catch(fb);else fb();
+}
+function eraseAll(){
+  openModal('<h2>🗑️ Erase everything?</h2><p class="small">This deletes all check-ins, memories, letters, sessions and settings from this browser. This cannot be undone.</p>'+
+    '<div class="rowbtns"><button class="btn danger" id="btnErase2">Yes, erase all</button><button class="btn ghost" onclick="closeModal()">Cancel</button></div>');
+  $('#btnErase2').addEventListener('click',()=>{DB=DEFAULT_DB();DB.profile.consentAccepted=true;save();renderAll();closeModal();flashSaved('Erased');});
+}
+
+/* ================= WELCOME ================= */
+function welcomeModal(){
+  openModal('<h2>🌉 Welcome to BRIDGE</h2>'+
+    '<p class="small">A private, offline dashboard for living well with bipolar: track your <b>𝒫/ℬ/𝒯</b> coordinates, map state-tagged memories, run the <b>BRIDGE protocol</b> gently, and keep your safety net in one place. All data stays on this device.</p>'+
+    '<div class="warnbox w-warn"><b>This is not medical advice.</b> Never stop or change medication without your prescriber. If you notice decreased sleep, racing thoughts, grandiosity, or risky urges — pause memory work and contact your treatment team.</div>'+
+    '<label class="chk"><input type="checkbox" id="wc1"> I understand this is a self-tracking tool, not treatment or medical advice.</label>'+
+    '<label class="chk"><input type="checkbox" id="wc2"> I will not stop or change my meds on my own.</label>'+
+    '<div class="field"><label>Your name (optional — used in the grounding script)</label><input type="text" id="wname" placeholder="First name or nickname"></div>'+
+    '<div class="rowbtns"><button class="btn primary" id="btnConsent">Enter dashboard</button></div>');
+  $('#btnConsent').addEventListener('click',()=>{
+    if(!$('#wc1').checked||!$('#wc2').checked){alert('Please tick both boxes to continue.');return;}
+    DB.profile.consentAccepted=true;DB.profile.name=$('#wname').value.trim();save();closeModal();
+  });
+}
+
+/* ================= BREATH & SENSES ================= */
+const breath={on:false,iv:null,seq:[['Breathe in…',4,1.18],['Hold…',2,1.18],['Breathe out…',6,0.82]],i:0,t:0};
+function breathToggle(){
+  const bl=$('#breathLabel'),bc=$('#breathCircle');
+  if(breath.on){clearInterval(breath.iv);breath.on=false;bl.textContent='Paused. Come back any time.';return;}
+  breath.on=true;breath.i=0;breath.t=breath.seq[0][1];
+  $('#btnBreath').textContent='Stop';
+  const tick=()=>{const[label,,sc]=breath.seq[breath.i];bl.textContent=label+' ('+breath.t+')';bc.style.transform='scale('+sc+')';
+    breath.t--;if(breath.t<=0){breath.i=(breath.i+1)%breath.seq.length;breath.t=breath.seq[breath.i][1];}};
+  tick();breath.iv=setInterval(tick,1000);
+}
+let senseStep=0;
+function senseUI(){const s=SENSES[Math.min(senseStep,SENSES.length-1)];
+  $('#senseBox').innerHTML=senseStep>=SENSES.length?'✅ <b>Grounded.</b> Notice your feet on the floor. You\'re here.':'Find <b style="color:var(--accent)">'+s[0]+'</b> '+s[1]+'.';}
+function senseNext(){if(senseStep<SENSES.length){senseStep++;senseUI();}}
+
+/* ================= GLOBAL DELEGATION ================= */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-act]');if(!b)return;
+  const act=b.dataset.act,id=b.dataset.id;
+  if(act==='del-checkin'&&confirm('Delete this check-in?')){DB.checkins=DB.checkins.filter(c=>c.id!==id);save();renderHeader();renderTimeline();renderPosCard();}
+  if(act==='edit-checkin')loadEntryToForm(id);
+  if(act==='del-mem'&&confirm('Delete this memory from the atlas?')){DB.memories=DB.memories.filter(m=>m.id!==id);save();renderMemList();refreshSesMemoryOptions();}
+  if(act==='visit-mem'){const m=DB.memories.find(x=>x.id===id);if(!m)return;refreshSesMemoryOptions();$('#ses-memory').value=m.id;$('#ses-arousalStart').value=DB.settings.gateArousal||0;
+    $$('#bridgePills .pill').forEach(p=>p.classList.toggle('active',p.dataset.sub==='sessions'));
+    $$('.subpanel').forEach(p=>p.classList.toggle('active',p.id==='sub-sessions'));window.scrollTo({top:0,behavior:'smooth'});}
+  if(act==='del-ses'&&confirm('Delete this session log?')){DB.bridgeSessions=DB.bridgeSessions.filter(s=>s.id!==id);save();renderSesList();}
+  if(act==='del-letter'&&confirm('Delete this letter?')){DB.partsLetters=DB.partsLetters.filter(l=>l.id!==id);save();renderParts();}
+  if(act==='del-audit'){DB.audits=DB.audits.filter(x=>x.id!==id);save();renderTools();}
+  if(act==='del-rev'){DB.revelationChecks=DB.revelationChecks.filter(x=>x.id!==id);save();renderTools();}
+  if(act==='del-temp'){DB.temporalAnchors=DB.temporalAnchors.filter(x=>x.id!==id);save();renderTools();}
+  if(act==='del-role'){DB.roles=DB.roles.filter(x=>x.id!==id);save();renderTools();}
+  if(act==='del-ew'){DB.safety.earlyWarnings.splice(+b.dataset.idx,1);save();renderSafety();}
+  if(act==='del-med'){DB.safety.meds.splice(+b.dataset.idx,1);save();renderSafety();}
+  if(act==='del-ct'){DB.safety.contacts.splice(+b.dataset.idx,1);save();renderSafety();}
+  if(act==='del-ak'){DB.anchorKit[b.dataset.list].splice(+b.dataset.idx,1);save();renderAnchor();}
+});
+document.addEventListener('click',e=>{
+  const ak=e.target.closest('[data-akadd]');
+  if(ak){const list=ak.dataset.akadd;const inp=$('#akIn-'+list);const v=inp.value.trim();if(!v)return;
+    DB.anchorKit[list].push(v);inp.value='';save();renderAnchor();}
+  const sf=e.target.closest('[data-safadd]');
+  if(sf){const k=sf.dataset.safadd;
+    if(k==='ew'){const v=$('#ewIn').value.trim();if(v){DB.safety.earlyWarnings.push(v);$('#ewIn').value='';}}
+    if(k==='med'){const n=$('#medName').value.trim();if(n){DB.safety.meds.push({name:n,dose:$('#medDose').value.trim(),time:$('#medTime').value.trim()});$('#medName').value='';$('#medDose').value='';$('#medTime').value='';}}
+    if(k==='ct'){const n=$('#ctName').value.trim();if(n){DB.safety.contacts.push({name:n,role:$('#ctRole').value.trim(),phone:$('#ctPhone').value.trim()});$('#ctName').value='';$('#ctRole').value='';$('#ctPhone').value='';}}
+    save();renderSafety();}
+  const pb=e.target.closest('[data-pen]');
+  if(pb){if(DB.settings.gateArousal>=4&&!confirm('Arousal is above the window. BRIDGE rule says ground first. Continue anyway?'))return;penStart(+pb.dataset.pen);}
+});
+
+/* ================= INIT & WIRING ================= */
+function renderAll(){renderHeader();renderToday();renderPosCard();renderTimeline();renderBridge();renderTools();renderSafety();renderData();
+  if(activeTab==='map')drawMap();}
+function init(){
+  $$('#bottomnav .navbtn').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
+  // today bindings
+  bindRange('ci-mood','ci-moodv',v=>fmtN(+v,0));
+  bindRange('ci-energy','ci-energyv',v=>''+v);
+  bindRange('ci-arousal','ci-arousalv',v=>''+v);
+  ['mf-access','mf-overwhelm','mf-flat','mf-safe'].forEach(k=>bindRange(k,k+'v',v=>''+v));
+  ['ci-P','ci-B','ci-T','ci-sleep'].forEach(k=>{const el=$('#'+el(k));function el(x){return x;}});
+  ['ci-P','ci-B','ci-T','ci-sleep'].forEach(k=>$('#'+k).addEventListener('input',()=>{ciDirty=true;updateCiLive();}));
+  $('#ci-sleep').addEventListener('input',()=>{ciDirty=true;updateCiLive();});
+  $('#btnSaveCheckin').addEventListener('click',saveCheckin);
+  $('#btnSuggest').addEventListener('click',suggestStateModal);
+  $('#btnCancelEdit').addEventListener('click',()=>{editingId=null;ciDirty=false;$('#editingBar').style.display='none';$('#btnSaveCheckin').textContent='💾 Save check-in';renderToday();});
+  // map
+  const cv=$('#mapCanvas');
+  cv.addEventListener('pointerdown',e=>{map.dragging=true;map.auto=false;cv.setPointerCapture(e.pointerId);map.px=e.clientX;map.py=e.clientY;$('#mapAuto').textContent='▶ Auto-rotate';});
+  cv.addEventListener('pointermove',e=>{if(!map.dragging)return;map.ry+=(e.clientX-map.px)*0.008;map.rx=clamp(map.rx+(e.clientY-map.py)*0.008,-1.45,1.45);map.px=e.clientX;map.py=e.clientY;});
+  ['pointerup','pointercancel','pointerleave'].forEach(ev=>cv.addEventListener(ev,()=>map.dragging=false));
+  cv.addEventListener('wheel',e=>{e.preventDefault();map.zoom=clamp(map.zoom*(e.deltaY<0?1.1:0.9),0.5,2.4);},{passive:false});
+  $('#mapReset').addEventListener('click',()=>{map.rx=-0.42;map.ry=0.72;map.zoom=1;});
+  $('#mapAuto').addEventListener('click',()=>{map.auto=!map.auto;$('#mapAuto').textContent=map.auto?'⏸ Auto-rotate':'▶ Auto-rotate';});
+  $('#mapZoomIn').addEventListener('click',()=>map.zoom=clamp(map.zoom*1.2,0.5,2.4));
+  $('#mapZoomOut').addEventListener('click',()=>map.zoom=clamp(map.zoom/1.2,0.5,2.4));
+  $('#mapDiffs').addEventListener('change',e=>{mapDiffsOn=e.target.checked;renderPosCard();});
+  // timeline
+  $('#rangePills').addEventListener('click',e=>{const p=e.target.closest('.pill');if(!p)return;chartRange=+p.dataset.days;
+    $$('#rangePills .pill').forEach(x=>x.classList.toggle('active',x===p));renderTimeline();});
+  // bridge pills
+  $('#bridgePills').addEventListener('click',e=>{const p=e.target.closest('.pill');if(!p)return;
+    $$('#bridgePills .pill').forEach(x=>x.classList.toggle('active',x===p));
+    $$('.subpanel').forEach(s=>s.classList.toggle('active',s.id==='sub-'+p.dataset.sub));});
+  $('#gateArousal').addEventListener('input',e=>{DB.settings.gateArousal=+e.target.value;save();updateGate();});
+  // memory form
+  bindRange('mem-iThen','mem-iThenv',v=>''+v);bindRange('mem-iNow','mem-iNowv',v=>''+v);
+  $('#btnSaveMem').addEventListener('click',()=>{
+    const title=$('#mem-title').value.trim();if(!title){alert('Give the memory a title (a handle, not the whole story).');return;}
+    DB.memories.push({id:uid(),ts:Date.now(),title,state:$('#mem-state').value,event:$('#mem-event').value.trim(),
+      believed:$('#mem-believed').value.trim(),body:$('#mem-body').value.trim(),need:$('#mem-need').value.trim(),
+      missing:{sleep:$('#mc-sleep').checked,meds:$('#mc-meds').checked,support:$('#mc-support').checked,time:$('#mc-time').checked,norms:$('#mc-norms').checked,others:$('#mc-others').checked},
+      cue:$('#mem-cue').value.trim(),iThen:+$('#mem-iThen').value,iNow:+$('#mem-iNow').value});
+    ['mem-title','mem-event','mem-believed','mem-body','mem-need','mem-cue'].forEach(k=>$('#'+k).value='');
+    ['mc-sleep','mc-meds','mc-support','mc-time','mc-norms','mc-others'].forEach(k=>$('#'+k).checked=false);
+    save();renderMemList();refreshSesMemoryOptions();flashSaved('Memory mapped ✓');});
+  $('#memFilter').addEventListener('change',renderMemList);
+  // sessions
+  $('#penStop').addEventListener('click',penStop);
+  $('#penResetReps').addEventListener('click',()=>{pen.reps=0;penUI();});
+  $('#btnLogSession').addEventListener('click',()=>{
+    DB.bridgeSessions.push({id:uid(),ts:Date.now(),memoryId:$('#ses-memory').value||null,
+      memoryTitle:($('#ses-memory').selectedOptions[0]&&$('#ses-memory').value)?$('#ses-memory').selectedOptions[0].textContent.replace(/^[^·]*·\s*/,''):'',
+      rung:$('#ses-rung').value,arousalStart:+$('#ses-arousalStart').value||0,arousalEnd:+$('#ses-arousalEnd').value||0,
+      reps:pen.reps,min:+$('#ses-min').value||10,withinWindow:$('#ses-window').checked,notes:$('#ses-notes').value.trim()});
+    pen.reps=0;penUI();$('#ses-notes').value='';save();renderSesList();flashSaved('Session logged ✓');});
+  // parts
+  $('#partTabs').addEventListener('click',e=>{const p=e.target.closest('.pill');if(!p)return;currentPart=p.dataset.part;renderParts();});
+  $('#btnSaveLetter').addEventListener('click',()=>{
+    const body=$('#part-body').value.trim();if(!body){alert('Write something to the part first — even one honest sentence.');return;}
+    DB.partsLetters.push({id:uid(),ts:Date.now(),part:currentPart,title:$('#part-title').value.trim(),body});
+    $('#part-title').value='';$('#part-body').value='';save();renderParts();flashSaved('Letter saved ✓');});
+  // tools
+  bindRange('au-int','au-intv',v=>''+v);bindRange('rv-urg','rv-urgv',v=>''+v);
+  $('#au-int').addEventListener('input',()=>{$('#auWarn').innerHTML=+$('#au-int').value>=8?'<div class="warnbox w-high"><b>Intensity 8+ — ground first, audit later.</b> Anchor Kit → breathing → 5-4-3-2-1.</div>':'';});
+  $('#rv-urg').addEventListener('input',()=>{$('#rvWarn').innerHTML=+$('#rv-urg').value>=7?'<div class="warnbox w-high"><b>Urgency ≥ 7 feels like a mission.</b> Contact support before acting on anything. This is exactly what the check is for.</div>':'';});
+  $('#btnSaveAudit').addEventListener('click',()=>{const t=$('#au-trigger').value.trim();if(!t)return;
+    DB.audits.push({id:uid(),ts:Date.now(),trigger:t,intensity:+$('#au-int').value,oldState:$('#au-old').value,facts:$('#au-facts').value.trim(),reframe:$('#au-reframe').value.trim()});
+    ['au-trigger','au-facts','au-reframe'].forEach(k=>$('#'+k).value='');save();renderTools();flashSaved('Audit saved ✓');});
+  $('#btnSaveRev').addEventListener('click',()=>{const t=$('#rv-insight').value.trim();if(!t)return;
+    DB.revelationChecks.push({id:uid(),ts:Date.now(),insight:t,urgency:+$('#rv-urg').value,newold:$('#rv-newold').value,evidence:$('#rv-evidence').value.trim(),action:$('#rv-action').value});
+    ['rv-insight','rv-evidence'].forEach(k=>$('#'+k).value='');save();renderTools();flashSaved('Check saved ✓');});
+  $('#btnSaveTemp').addEventListener('click',()=>{const p=$('#ta-present').value.trim();if(!p){alert('The present-evidence column is the anchor — fill at least that one.');return;}
+    DB.temporalAnchors.push({id:uid(),ts:Date.now(),past:$('#ta-past').value.trim(),future:$('#ta-future').value.trim(),present:p});
+    ['ta-past','ta-future','ta-present'].forEach(k=>$('#'+k).value='');save();renderTools();flashSaved('Anchor saved — read it aloud ✓');});
+  $('#btnSaveRole').addEventListener('click',()=>{const p=$('#ro-person').value.trim();if(!p)return;
+    DB.roles.push({id:uid(),ts:Date.now(),person:p,role:$('#ro-role').value.trim(),script:$('#ro-script').value.trim(),check:$('#ro-check').value.trim()});
+    ['ro-person','ro-role','ro-script','ro-check'].forEach(k=>$('#'+k).value='');save();renderTools();flashSaved('Role map saved ✓');});
+  // safety
+  $('#btnHelpNow').addEventListener('click',helpModal);
+  $('#crisisPlan').addEventListener('change',e=>{DB.safety.crisisPlan=e.target.value;save();});
+  $('#sleepPlan').addEventListener('change',e=>{DB.safety.sleepPlan=e.target.value;save();});
+  // anchor widgets
+  $('#btnBreath').addEventListener('click',breathToggle);
+  $('#btnSenseNext').addEventListener('click',senseNext);
+  $('#btnSenseReset').addEventListener('click',()=>{senseStep=0;senseUI();});
+  // data
+  $('#btnExport').addEventListener('click',exportJSON);
+  $('#btnImportWrap').addEventListener('click',()=>$('#importFile').click());
+  $('#importFile').addEventListener('change',e=>{if(e.target.files[0])importJSON(e.target.files[0]);e.target.value='';});
+  $('#btnCopy').addEventListener('click',copyJSON);
+  $('#btnErase').addEventListener('click',eraseAll);
+  // resize redraw
+  let rt=null;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(activeTab==='map')drawMap();if(activeTab==='timeline')renderTimeline();},200);});
+  // boot
+  senseUI();penUI();
+  const startTab=DB.ui.lastTab&&$('#tab-'+DB.ui.lastTab)?DB.ui.lastTab:'today';
+  $$('#bottomnav .navbtn').forEach(b=>b.classList.toggle('active',b.dataset.tab===startTab));
+  $$('section.tab').forEach(s=>s.classList.toggle('active',s.id==='tab-'+startTab));
+  activeTab=startTab;
+  renderAll();
+  if(startTab==='map')startMapLoop();
+  if(!DB.profile.consentAccepted)welcomeModal();
+}
+init();
+</script>
+</body>
+</html>
