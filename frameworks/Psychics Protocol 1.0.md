@@ -1,9 +1,9 @@
-🧠 PSYCHICS PROTOCOL v1.0
+# 🧠 PSYCHICS PROTOCOL v1.0
 ## A Comprehensive Research Architecture for Hyper-Correlational Information Processing
 
 **Framework Designation:** PSP-144
 **Status:** Empirically Hardened | Dimensionally Consistent | Ethically Bounded
-**Core Thesis:** What manifests as "psychic" experience is the brain's high-bandwidth detection, processing, and transfer of微弱 correlations operating below conscious threshold—a natural consequence of evolved social cognition at extreme parameter values.
+**Core Thesis:** What manifests as "psychic" experience is the brain's high-bandwidth detection, processing, and transfer of weak correlations operating below conscious threshold—a natural consequence of evolved social cognition at extreme parameter values.
 
 ---
 
@@ -2728,18 +2728,16 @@ $$\mathcal{B}_{flexibility} = \text{variance}(\mathcal{B})$$
 
 **Analysis:** Mixed ANOVA; planned contrasts at 30 and 60 min.
 
-**Null Condition:** Prediction FAILS if no time × treatment interactUSBCy\E6\00\00\E0\00\00\00
-*\00\83\A0@\00\00\F0\00\00\00\00\00\00\00\008: Metabolic Depletion Reduces Accuracy
+**Null Condition:** Prediction FAILS if no time × treatment interaction is observed (p > 0.05 for interaction term).
 
-**Hypothesis:** Sustained high-\(\mathcal{P}\) processing depletes glucose and reduces accuracy after 30 minutes, recoverable with glucose supplementation.
+---
 
-**Design:** 2 (glucose drink vs. placebo) × 3 (time: 0, 30, 60 min) mixed design; social inference task.
+# SECTION 10.0: CLINICAL SAFEGUARDS
+## 18 Mandatory Protocols
 
-**Participants:** N = 80 (40 per group).
+### 10.1 General Safeguards
 
-**Analysis:** Mixed ANOVA; planned contrasts at 30 and 60 min.
-
-**Null Condition:** Prediction FAILS if no time × treatment interact**Suicide Screening:** Beck Scale for Suicidal Ideation (BSS) administered before and after each session; exclude/refer if BSS > 0.
+**Suicide Screening:** Beck Scale for Suicidal Ideation (BSS) administered before and after each session; exclude/refer if BSS > 0.
 
 **AI Collaboration Disclosure:** Exact percentage of AI-generated vs. researcher-verified content stated in all publications.
 
@@ -6333,24 +6331,31 @@ def holographic_memory_retrieval(memory_hologram, cue):
 
 # Function 79: Criticality Homeostasis PID Controller
 def criticality_homeostasis_pid(rho_measured, rho_target=1.0, dt=0.001,
-                                Kp=1.0, Ki=0.1, Kd=0.05)USBCz\E6\00\00@\00\00\00
-*\00\83\A10\00\00\A0\00\00\00\00\00\00\00\F9 = cue
-    else:
-        memory_pad = memory_hologram
-        cue_pad = cue
+                                Kp=1.0, Ki=0.1, Kd=0.05):
+    """
+    Real-time PID controller to maintain spectral radius at criticality
+    u(t) = Kp·e(t) + Ki·∫e(τ)dτ + Kd·de/dt
+    where e(t) = rho_target - rho_measured
+    """
+    import numpy as np
 
-    # Fourier domain correlation
-    F_memory = np.fft.fft(memory_pad)
-    F_cue = np.fft.fft(cue_pad)
-    F_retrieved = F_cue * np.conj(F_memory)
-    retrieved = np.fft.ifft(F_retrieved)
+    # Error
+    error = rho_target - rho_measured
 
-    return np.real(retrieved)
+    # Integral term (would need state)
+    integral = np.cumsum(error) * dt
+
+    # Derivative term
+    derivative = np.gradient(error, dt)
+
+    # Control signal
+    control = Kp * error + Ki * integral + Kd * derivative
+
+    return control
 
 
-# Function 79: Criticality Homeostasis PID Controller
-def criticality_homeostasis_pid(rho_measured, rho_target=1.0, dt=0.001,
-                                Kp=1.0, Ki=0.1, Kd=0.05)or_self, likelihood, observation, B):
+# Function 80: Self-Other Boundary Bayes Update
+def boundary_bayes_update(prior_self, likelihood, observation, B):
     """
     P(self|obs)_{t+1} = [P(obs|self)P(self)_t / P(obs)] * e^(-B)
     """
@@ -7936,4 +7941,10 @@ This framework:
 
 **The poetry is gone. The science remains.**
 
-This is not a framework for "psychic" abilities in any supernatural sense. It is a framework for understanding **social cognition, predictive processing, boundary dissolution, and altered states*
+This is not a framework for "psychic" abilities in any supernatural sense. It is a framework for understanding **social cognition, predictive processing, boundary dissolution, and altered states of consciousness** using the rigorous tools of cognitive neuroscience, information theory, and complex systems science. The framework honors the genuine phenomenology of "psychic" experiences—the feeling of knowing without knowing how, the sense of connection beyond the ordinary, the dissolution of self-other boundaries—while providing a naturalistic, testable, and clinically responsible account of their origins and mechanisms.
+
+The 144 functions, 18 axioms, and unified field equation are offered not as final truths but as **precise, falsifiable hypotheses** ready for empirical test. The null conditions are specified. The power analyses are provided. The safeguards are mandatory. The poetry is gone. The science remains.
+
+---
+
+*End of PSP-144 v1.0*
